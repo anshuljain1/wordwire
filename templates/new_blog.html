@@ -1,0 +1,11 @@
+<!DOCTYPE html>
+{% autoescape true %}
+<html>
+	<body>
+        <div>Please Entery the new blog category to be created.</div>
+        <form action="/new_blog?author={{ author }}" method="post">
+            <div>Blog Name<br><textarea name="blog_name" rows="20" cols="150"></textarea></div>
+            <div><input type="submit" value="Create it!"></div>
+        </form>
+    </body>
+</html>

@@ -1,10 +1,19 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-	<meta charset="utf-8" />
-	<title>index</title>
-</head>
-<body>
-
-</body>
+{% autoescape true %}
+<html>
+	<body>
+		<form action="/publish?author={{ author }}" method="post">
+			<div>Title<br><textarea name="title" rows="2" cols="150"></textarea></div>
+            <div>Blog Categories:<br><select name="topic">
+                    {% for blog in blogList %}
+                    <option value="{{blog}}">{{ blog }}</option>
+                    {% endfor %}
+                </select></div>
+            <div>Tags (Please Enter tags, separated by commas. Eg: Tech, Apple)<br><textarea name="tags" rows="2" cols="90"></textarea></div>
+			<div>Content<br><textarea name="content" rows="20" cols="150"></textarea></div>
+			<div><input type="submit" value="Post it!"></div>
+		</form>
+		<a href="{{ url|safe }}">{{ url_linktext }}</a>
+	</body>
 </html>
+{% endautoescape %}
