@@ -2,7 +2,7 @@
 {% autoescape true %}
 <html>
 	<body>
-        <div>Welcome, {{author}}!</div>
+        <div>{{author}} Logged In</div>
         <div>Blog Categories:<br>
             <form>
             {% for blog in blogList %}
@@ -34,9 +34,9 @@
             <div>{{post.title}}</div>
             <div>Created by: {{post.author}} on {{post.creation}}</div>
             <div>Last modified on {{post.date}}, at {{post.time}}.</div>
-            <div>{{post.content|truncate(500)}} <a href="/read_more?uid={{post.uid}}">Read More</a></div>
+            <div>{{post.content|truncate(500)}}</div>
         </p>
-        {% endfor %}
+    {% endfor %}
     <p><a href="{{ url|safe }}">{{ url_linktext }}</a></p>
     <p><a href="/">Home</a></p>
     </body>

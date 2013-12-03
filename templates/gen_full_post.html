@@ -2,15 +2,7 @@
 {% autoescape true %}
 <html>
 	<body>
-        <div>Welcome, {{author}}!</div>
-        <div>Blog Categories:<br>
-            <form>
-            {% for blog in blogList %}
-                <input type="submit" value="{{blog}}" formmethod="post" formaction="/blog?author={{ author }}&blog={{blog}}">
-            {% endfor %}
-            </form>
-        </div>
-        <div>Your Tags <br>
+        <div>People are writing about: <br>
             <form >
             {% for tag in tagList %}
                 <input type="submit" value="{{tag}}" formmethod="post" formaction="/tag?author={{ author }}&tag={{tag}}">
@@ -18,8 +10,7 @@
             </form>
         </div>
         <div>
-            <a href="/new_blog?author={{author}}">Add a new blog</a>
-            <a href="/new_post?author={{author}}">Add a new post</a>
+            <a href="{{ url|safe }}">Login</a> to start Writing!
         </div>
         {% for post in postList %}
         <p>
@@ -34,11 +25,9 @@
             <div>{{post.title}}</div>
             <div>Created by: {{post.author}} on {{post.creation}}</div>
             <div>Last modified on {{post.date}}, at {{post.time}}.</div>
-            <div>{{post.content|truncate(500)}} <a href="/read_more?uid={{post.uid}}">Read More</a></div>
+            <div>{{post.content}}</div>
         </p>
-        {% endfor %}
-    <p><a href="{{ url|safe }}">{{ url_linktext }}</a></p>
-    <p><a href="/">Home</a></p>
+    {% endfor %}
     </body>
 </html>
 {% endautoescape %}

@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+{% autoescape true %}
+<html>
+	<body>
+        <div>Welcome to WordWire, {{author}}!</div>
+        <br>
+        <p>
+            Before you get started, be sure to make a blog category!
+        </p>
+        
+        <div>Here are some awesome things you can do to get started</div>
+        <div>
+            <a href="/new_blog?author={{author}}">Add a new blog</a>
+            <a href="/new_post?author={{author}}">Add a new post</a>
+        </div>
+    <p><a href="{{ url|safe }}">{{ url_linktext }}</a></p>
+    <p><a href="/user_welcome">Home</a></p>
+    </body>
+</html>
+{% endautoescape %}

@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+{% autoescape true %}
+<html>
+	<body>
+        <div>Welcome to WordWire!</div>
+        <div>People are writing about: <br>
+            <form >
+            {% for tag in tagList %}
+                <input type="submit" value="{{tag}}" formmethod="post" formaction="/tag?tag={{tag}}">
+            {% endfor %}
+            </form>
+        </div>
+        <div>
+            <a href="{{ url|safe }}">Login</a> to start Writing!
+        </div>
+        {% for post in postList %}
+        <p>
+            <div><font size="2">{{post.blogName}}</font></div>
+            <div>Tagged in:
+                <form>
+            {% for tag in post.tag %}
+                    <input type="submit" value="{{tag}}" formmethod="post" formaction="/tag?tag={{tag}}">
+            {% endfor %}
+                </form>
+            </div>
+            <div>{{post.title}}</div>
+            <div>Created by: {{post.author}} on {{post.creation}}</div>
+            <div>Last modified on {{post.date}}, at {{post.time}}.</div>
+            <div>{{post.content|truncate(500)}}<a href="/read_more?uid={{post.uid}}">Read More</a></div>
+        </p>
+        {% endfor %}
+    </body>
+</html>
+{% endautoescape %}
