@@ -31,7 +31,7 @@
             {% endfor %}
                 </form>
             </div>
-            <div>{{post.title}}</div>
+            <div>{{post.title}} <a href="/post_edit?uid={{post.uid}}">edit</a></div>
             <div>Created by: {{post.author}} on {{post.creation}}</div>
             <div>Last modified on {{post.date}}, at {{post.time}}.</div>
             <div>{{post.content|truncate(500)}} <a href="/read_more?uid={{post.uid}}">Read More</a></div>

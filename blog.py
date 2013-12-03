@@ -172,13 +172,49 @@ class PostPublish(webapp2.RequestHandler):
         self.redirect('/?'+ urllib.urlencode(query_params))
 
 class EditPost(webapp2.RequestHandler):
+    
     def get(self):
         user = users.get_current_user()
-        new_post = BlogPost(parent = user_key(user.nickname()))
+        uid = str(self.request.get('uid'))
+        user_query = BlogPost.query(BlogPost.uid == uid)
+        stalePost = user_query.fetch()
+        stalePost = stalePost[0]
+        author = stalePost.author
+        title = stalePost.title
+        blogVal = stalePost.blogName
+        tags = stalePost.tag
+        tags = ','.join(tags)
+        creation = stalePost.creation
+        content = stalePost.content
+        uid = stalePost.uid
+        parent = user_key(user.nickname()).get()
+        blogList = parent.blogList
+        template_values = {
+            'author': author,
+            'title': title,
+            'blogVal': blogVal,
+            'tags': tags,
+            'creation':creation,
+            'content':content,
+            'blogList':blogList,
+            'uid':uid,
+        }
+        template = JINJA_ENVIRONMENT.get_template('templates/post_edit.html')
+        self.response.write(template.render(template_values))
+        
+    def post(self):
+        user = users.get_current_user()
+        
+        new_post = BlogPost(id = self.request.get('uid'),
+                            parent = user_key(user.nickname()))
         new_post.author = self.request.get('author')
         new_post.blogName = self.request.get('topic')
         new_post.title = self.request.get('title', DEFAULT_TITLE_NAME)
         new_post.content = self.request.get('content')
+        new_post.uid = str(self.request.get('uid'))
+        blogpost_query = BlogPost.query(BlogPost.uid == new_post.uid)
+        stalePost = blogpost_query.fetch()[0]
+        new_post.creation = stalePost.creation
         tag = self.request.get('tags')
         tag = tag.split(',')
         for i in xrange(len(tag)):

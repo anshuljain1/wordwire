@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+{% autoescape true %}
+<html>
+	<body>
+		<form action="/post_edit?author={{author}}&uid={{uid}}" method="post">
+			<div>Title<br><textarea name="title" rows="2" cols="150">{{title}}</textarea></div>
+            <div>Created on <label name="creation" >{{creation}}</label></div>
+            <div>Blog Categories:<br><select name="topic">
+                    {% for blog in blogList %}
+                        <option value="{{blog}}" >{{ blog }}</option>
+                    {% endfor %}
+                </select></div>
+            <div>Tags (Please Enter tags, separated by commas. Eg: Tech, Apple)<br><textarea name="tags" rows="2" cols="90">{{tags}}</textarea></div>
+			<div>Content<br><textarea name="content" rows="20" cols="150">{{content}}</textarea></div>
+			<div><input type="submit" value="Update!"></div>
+		</form>
+	</body>
+</html>
+{% endautoescape %}

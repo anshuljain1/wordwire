@@ -34,7 +34,7 @@
             <div>{{post.title}}</div>
             <div>Created by: {{post.author}} on {{post.creation}}</div>
             <div>Last modified on {{post.date}}, at {{post.time}}.</div>
-            <div>{{post.content|truncate(500)}}</div>
+            <div>{{post.content}}</div>
         </p>
     {% endfor %}
     <p><a href="{{ url|safe }}">{{ url_linktext }}</a></p>
