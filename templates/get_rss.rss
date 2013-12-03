@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+<rss version="2.0">
+    <channel>
+        {% for post in postList %}
+        <item>
+            <title>{{post.title}}</title>
+            <link>http://{{host}}/read_more?uid={{post.uid}}</link>
+            <description>{{post.content|truncate(200)}}</description>
+        </item>
+        {% endfor %}
+    </channel>
+</rss>

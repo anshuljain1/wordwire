@@ -2,6 +2,7 @@ import os
 
 from google.appengine.api import users
 from google.appengine.ext import ndb
+from google.appengine.datastore.datastore_query import Cursor
 
 import webapp2
 import jinja2
@@ -299,6 +300,7 @@ class BlogTopic(webapp2.RequestHandler):
             'postList': posts,
             'url': url,
             'url_linktext': url_linktext,
+            'rss_blog':blog,
             }
 
             template = JINJA_ENVIRONMENT.get_template('templates/user_page.html')
@@ -311,6 +313,7 @@ class BlogTopic(webapp2.RequestHandler):
 
 class ReadMore(webapp2.RequestHandler):
     def get(self):
+        
         uid = str(self.request.get('uid'))
         user = users.get_current_user()
         
@@ -350,9 +353,33 @@ class ReadMore(webapp2.RequestHandler):
             'url': url,
             }
 
-            template = JINJA_ENVIRONMENT.get_template('templates/auth_full_post.html')
+            template = JINJA_ENVIRONMENT.get_template('templates/gen_full_post.html')
             self.response.write(template.render(template_values))
 
+class GetRSS(webapp2.RequestHandler):
+    def get(self):
+        user = users.get_current_user()
+        blog = self.request.get('blog')
+        logging.error(blog)
+        if os.environ.get('HTTP_HOST'): 
+            host = os.environ['HTTP_HOST'] 
+        else: 
+            host = os.environ['SERVER_NAME']
+        post_query = BlogPost.query(BlogPost.author == user.nickname(),
+                                    BlogPost.blogName == blog).order(-BlogPost.creation)
+        posts = post_query.fetch()
+        
+        if user :
+            template_values = {
+                'author': user.nickname(),
+                'host':host,
+                'postList':posts,
+            }
+            self.response.headers['Content-Type'] = "text/xml; charset=utf-8"
+            template = JINJA_ENVIRONMENT.get_template('templates/get_rss.rss')
+            self.response.write(template.render(template_values))
+        else:
+            self.redirect(users.create_login_url(self.request.uri))
             
 
 application = webapp2.WSGIApplication([
@@ -364,4 +391,5 @@ application = webapp2.WSGIApplication([
     ('/blog', BlogTopic),
     ('/post_edit', EditPost),
     ('/read_more', ReadMore),
+    ('/get_rss', GetRSS),
 ], debug=True)

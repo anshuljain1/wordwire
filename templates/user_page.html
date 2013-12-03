@@ -21,6 +21,9 @@
             <a href="/new_blog?author={{author}}">Add a new blog</a>
             <a href="/new_post?author={{author}}">Add a new post</a>
         </div>
+        {% if rss_blog %}
+            <a href="/get_rss?blog={{rss_blog}}">Get RSS</a>
+        {% endif %}
         {% for post in postList %}
         <p>
             <div><font size="2">{{post.blogName}}</font></div>
