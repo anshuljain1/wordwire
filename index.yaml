@@ -32,6 +32,14 @@ indexes:
 
 - kind: BlogPost
   properties:
+  - name: author
+  - name: tag
+  - name: creation
+    direction: desc
+  - name: uid
+
+- kind: BlogPost
+  properties:
   - name: tag
   - name: creation
     direction: desc

@@ -32,13 +32,14 @@ class UserPage(webapp2.RequestHandler):
     def get(self):
         user = users.get_current_user()
         if user:
+            curs = Cursor(urlsafe=self.request.get('cursor'))
             user_query = BlogUser.query(BlogUser.author == user)
             userDB = user_query.fetch()
             url = users.create_logout_url(self.request.uri)
             url_linktext = 'Logout'
             post_query = BlogPost.query(
             ancestor=user_key(user.nickname())).order(-BlogPost.creation)
-            posts = post_query.fetch(10)
+            posts, next_curs, more = post_query.fetch_page(10, start_cursor=curs)
 
             for i in xrange(len(posts)):
                 posts[i].content = jinja2.Markup(posts[i].content)
@@ -59,6 +60,9 @@ class UserPage(webapp2.RequestHandler):
 
                 template = JINJA_ENVIRONMENT.get_template('templates/user_page.html')
                 self.response.write(template.render(template_values))
+                if more and next_curs:
+                    self.response.out.write('<a href="/?cursor=%s">More...</a>' % next_curs.urlsafe())
+                self.response.out.write('</body></html>')
             else:
                 template_values = {
                 'author': user.nickname(),
@@ -74,7 +78,8 @@ class UserPage(webapp2.RequestHandler):
                 self.response.write(template.render(template_values))
         else:
             blogpost_query = BlogPost.query().order(-BlogPost.creation)
-            postList = blogpost_query.fetch(10)
+            curs = Cursor(urlsafe=self.request.get('cursor'))
+            postList, next_curs, more = blogpost_query.fetch_page(10, start_cursor=curs)
 
             for i in xrange(len(postList)):
                 postList[i].content = jinja2.Markup(postList[i].content)            
@@ -95,6 +100,9 @@ class UserPage(webapp2.RequestHandler):
 
             template = JINJA_ENVIRONMENT.get_template('templates/homepage.html')
             self.response.write(template.render(template_values))
+            if more and next_curs:
+                    self.response.out.write('<a href="/?cursor=%s">More...</a>' % next_curs.urlsafe())
+            self.response.out.write('</body></html>')
             
 
 class NewPost(webapp2.RequestHandler):
@@ -267,10 +275,11 @@ class TaggedPost(webapp2.RequestHandler):
         
         if author:
             post_query = BlogPost.query(BlogPost.author == author,
-                                    BlogPost.tag.IN([tag])).order(-BlogPost.creation)
+                                    BlogPost.tag.IN([tag])).order(-BlogPost.creation, BlogPost.key)
         else:
-            post_query = BlogPost.query(BlogPost.tag.IN([tag])).order(-BlogPost.creation)
-        posts = post_query.fetch(10)
+            post_query = BlogPost.query(BlogPost.tag.IN([tag])).order(-BlogPost.creation, BlogPost.key)
+        curs = Cursor(urlsafe=self.request.get('cursor'))
+        posts, next_curs, more = post_query.fetch_page(10, start_cursor=curs)
         
         if user:
             url = users.create_logout_url(self.request.uri)
@@ -290,6 +299,9 @@ class TaggedPost(webapp2.RequestHandler):
 
             template = JINJA_ENVIRONMENT.get_template('templates/user_page.html')
             self.response.write(template.render(template_values))
+            if more and next_curs:
+                    self.response.out.write('<a href="/?cursor=%s">More...</a>' % next_curs.urlsafe())
+            self.response.out.write('</body></html>')
         else:
             blogpost_query = BlogPost.query(BlogPost.tag.IN([tag])).order(-BlogPost.creation)
             postList = blogpost_query.fetch(10)
@@ -313,7 +325,8 @@ class BlogTopic(webapp2.RequestHandler):
         
         post_query = BlogPost.query(BlogPost.author == author,
                                     BlogPost.blogName == blog).order(-BlogPost.creation)
-        posts = post_query.fetch(10)
+        curs = Cursor(urlsafe=self.request.get('cursor'))
+        posts, next_curs, more = post_query.fetch_page(10, start_cursor=curs)
         
         if user:
             url = users.create_logout_url(self.request.uri)
@@ -334,6 +347,9 @@ class BlogTopic(webapp2.RequestHandler):
 
             template = JINJA_ENVIRONMENT.get_template('templates/user_page.html')
             self.response.write(template.render(template_values))
+            if more and next_curs:
+                    self.response.out.write('<a href="/?cursor=%s">More...</a>' % next_curs.urlsafe())
+            self.response.out.write('</body></html>')
         else:
             self.redirect(users.create_login_url(self.request.uri))
 
