@@ -33,10 +33,9 @@
             </div>
             <div>{{post.title}}</div>
             <div>Created by: {{post.author}} on {{post.creation}}</div>
-            <div>Last modified on {{post.date}}, at {{post.time}}.</div>
-            <div>{{post.content}}</div>
+            <div>{{content}}</div>
         </p>
-    {% endfor %}
+        {% endfor %}
     <p><a href="{{ url|safe }}">{{ url_linktext }}</a></p>
     <p><a href="/">Home</a></p>
     </body>

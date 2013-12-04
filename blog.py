@@ -9,6 +9,7 @@ import jinja2
 import logging
 import urllib
 import uuid
+import re
 
 DEFAULT_TITLE_NAME = 'My Blog Post'
 
@@ -38,6 +39,10 @@ class UserPage(webapp2.RequestHandler):
             post_query = BlogPost.query(
             ancestor=user_key(user.nickname())).order(-BlogPost.creation)
             posts = post_query.fetch(10)
+
+            for i in xrange(len(posts)):
+                posts[i].content = jinja2.Markup(posts[i].content)
+
             if userDB:
                 parent = user_key(user.nickname()).get()
                 tagList = parent.tagList
@@ -70,6 +75,10 @@ class UserPage(webapp2.RequestHandler):
         else:
             blogpost_query = BlogPost.query().order(-BlogPost.creation)
             postList = blogpost_query.fetch(10)
+
+            for i in xrange(len(postList)):
+                postList[i].content = jinja2.Markup(postList[i].content)            
+            
             url = users.create_login_url(self.request.uri)
             tag_query = BlogUser.query()
             tags = tag_query.fetch(projection=[BlogUser.tagList])
@@ -157,6 +166,13 @@ class PostPublish(webapp2.RequestHandler):
         new_post.blogName = self.request.get('topic')
         new_post.title = self.request.get('title', DEFAULT_TITLE_NAME)
         new_post.content = self.request.get('content')
+        
+        link= re.compile(r'<\s*(https?://w*\.(\S+)\.co\S+)\s*>')
+        img = re.compile(r'<\s*(https?://.+/(\S+)\.(jpg|gif|png))\s*>')
+        
+        new_post.content = img.sub(r'<img src="\1" alt="\2">',new_post.content)        
+        new_post.content = link.sub(r'<a href="\1">\2</a>',new_post.content)        
+        
         new_post.uid = uid
         tag = self.request.get('tags')
         tag = tag.split(',')
@@ -187,6 +203,12 @@ class EditPost(webapp2.RequestHandler):
         tags = ','.join(tags)
         creation = stalePost.creation
         content = stalePost.content
+        
+        xlink = re.compile(r'<a href="(https?://(\S+).co\S+)">\S+</a>')
+        ximg = re.compile(r'<img src="(\S+)" \S+>')
+        content = ximg.sub(r'<\1>',content)
+        content = xlink.sub(r'<\1>',content)
+        
         uid = stalePost.uid
         parent = user_key(user.nickname()).get()
         blogList = parent.blogList
@@ -213,6 +235,13 @@ class EditPost(webapp2.RequestHandler):
         new_post.title = self.request.get('title', DEFAULT_TITLE_NAME)
         new_post.content = self.request.get('content')
         new_post.uid = str(self.request.get('uid'))
+
+        link= re.compile(r'<\s*(https?://w*\.(\S+)\.co\S+)\s*>')
+        img = re.compile(r'<\s*(https?://.+/(\S+)\.(jpg|gif|png))\s*>')
+        
+        new_post.content = img.sub(r'<img src="\1" alt="\2">',new_post.content)        
+        new_post.content = link.sub(r'<a href="\1">\2</a>',new_post.content)        
+        
         blogpost_query = BlogPost.query(BlogPost.uid == new_post.uid)
         stalePost = blogpost_query.fetch()[0]
         new_post.creation = stalePost.creation
@@ -326,16 +355,16 @@ class ReadMore(webapp2.RequestHandler):
             parent = user_key(user.nickname()).get()
             tagList = parent.tagList
             blogList = parent.blogList
-            
+            logging.error(type(post[0].content))
             template_values = {
             'tagList': tagList,
             'blogList': blogList,
             'author': user.nickname(),
+            'content':jinja2.Markup(post[0].content),
             'postList': post,
             'url': url,
             'url_linktext': url_linktext,
             }
-
             template = JINJA_ENVIRONMENT.get_template('templates/auth_full_post.html')
             self.response.write(template.render(template_values))
         else:
@@ -349,6 +378,7 @@ class ReadMore(webapp2.RequestHandler):
             url = users.create_login_url(self.request.uri)
             template_values = {
             'tagList': tagList,
+            'content':jinja2.Markup(post[0].content),
             'postList': post,
             'url': url,
             }
