@@ -2,7 +2,9 @@ import os
 
 from google.appengine.api import users
 from google.appengine.ext import ndb
+from google.appengine.ext import db
 from google.appengine.datastore.datastore_query import Cursor
+from google.appengine.api import images
 
 import webapp2
 import jinja2
@@ -28,6 +30,45 @@ def wordwire_key(author_ID):
     """ Constructs a datastore entry for WordWire Blog"""
     return ndb.Key('WordWire',author_ID)
 
+class Main(webapp2.RequestHandler):
+    def get(self):
+        user = users.get_current_user()
+        blogpost_query = BlogPost.query().order(-BlogPost.creation)
+        curs = Cursor(urlsafe=self.request.get('cursor'))
+        postList, next_curs, more = blogpost_query.fetch_page(10, start_cursor=curs)
+
+        for i in xrange(len(postList)):
+            postList[i].content = jinja2.Markup(postList[i].content)            
+         
+        if user:
+            url = users.create_logout_url(self.request.uri)
+            url_linktext = 'Logout'
+            mypage = '/user'
+        else:
+            url = users.create_login_url(self.request.uri)
+            url_linktext = 'Login'
+            mypage = ''
+        tag_query = BlogUser.query()
+        tags = tag_query.fetch(projection=[BlogUser.tagList])
+        tagList =[]
+        for i in xrange(len(tags)):
+            tagList = tagList+tags[i].tagList
+        tagList = list(set(tagList))
+        tagList = map(str, tagList)
+        template_values = {
+        'tagList': tagList,
+        'postList': postList,
+        'url': url,
+        'url_linktext':url_linktext,
+        'mypage':mypage,
+        }
+
+        template = JINJA_ENVIRONMENT.get_template('templates/homepage.html')
+        self.response.write(template.render(template_values))
+        if more and next_curs:
+            self.response.out.write('<a href="/?cursor=%s">More...</a>' % next_curs.urlsafe())
+            self.response.out.write('</body></html>')
+
 class UserPage(webapp2.RequestHandler):
     def get(self):
         user = users.get_current_user()
@@ -43,7 +84,7 @@ class UserPage(webapp2.RequestHandler):
 
             for i in xrange(len(posts)):
                 posts[i].content = jinja2.Markup(posts[i].content)
-
+            
             if userDB:
                 parent = user_key(user.nickname()).get()
                 tagList = parent.tagList
@@ -62,7 +103,7 @@ class UserPage(webapp2.RequestHandler):
                 self.response.write(template.render(template_values))
                 if more and next_curs:
                     self.response.out.write('<a href="/?cursor=%s">More...</a>' % next_curs.urlsafe())
-                self.response.out.write('</body></html>')
+                    self.response.out.write('</body></html>')
             else:
                 template_values = {
                 'author': user.nickname(),
@@ -77,32 +118,7 @@ class UserPage(webapp2.RequestHandler):
                 template = JINJA_ENVIRONMENT.get_template('templates/user_welcome.html')
                 self.response.write(template.render(template_values))
         else:
-            blogpost_query = BlogPost.query().order(-BlogPost.creation)
-            curs = Cursor(urlsafe=self.request.get('cursor'))
-            postList, next_curs, more = blogpost_query.fetch_page(10, start_cursor=curs)
-
-            for i in xrange(len(postList)):
-                postList[i].content = jinja2.Markup(postList[i].content)            
-            
-            url = users.create_login_url(self.request.uri)
-            tag_query = BlogUser.query()
-            tags = tag_query.fetch(projection=[BlogUser.tagList])
-            tagList =[]
-            for i in xrange(len(tags)):
-                tagList = tagList+tags[i].tagList
-            tagList = list(set(tagList))
-            tagList = map(str, tagList)
-            template_values = {
-                'tagList': tagList,
-                'postList': postList,
-                'url': url,
-            }
-
-            template = JINJA_ENVIRONMENT.get_template('templates/homepage.html')
-            self.response.write(template.render(template_values))
-            if more and next_curs:
-                    self.response.out.write('<a href="/?cursor=%s">More...</a>' % next_curs.urlsafe())
-            self.response.out.write('</body></html>')
+            self.redirect(users.create_login_url(self.request.uri))
             
 
 class NewPost(webapp2.RequestHandler):
@@ -135,6 +151,8 @@ class BlogPost(ndb.Model):
     time = ndb.TimeProperty(auto_now_add=True)
     tag = ndb.StringProperty(repeated=True)
     uid = ndb.StringProperty()
+    upvote = ndb.IntegerProperty(indexed=False)
+    viewCount = ndb.IntegerProperty(indexed=False)
 
 class BlogUser(ndb.Model):
     """Models a blog user"""
@@ -180,7 +198,8 @@ class PostPublish(webapp2.RequestHandler):
         
         new_post.content = img.sub(r'<img src="\1" alt="\2">',new_post.content)        
         new_post.content = link.sub(r'<a href="\1">\2</a>',new_post.content)        
-        
+        new_post.upvote = 0
+        new_post.viewCount = 0
         new_post.uid = uid
         tag = self.request.get('tags')
         tag = tag.split(',')
@@ -275,7 +294,7 @@ class TaggedPost(webapp2.RequestHandler):
         
         if author:
             post_query = BlogPost.query(BlogPost.author == author,
-                                    BlogPost.tag.IN([tag])).order(-BlogPost.creation, BlogPost.key)
+            BlogPost.tag.IN([tag])).order(-BlogPost.creation, BlogPost.key)
         else:
             post_query = BlogPost.query(BlogPost.tag.IN([tag])).order(-BlogPost.creation, BlogPost.key)
         curs = Cursor(urlsafe=self.request.get('cursor'))
@@ -371,7 +390,6 @@ class ReadMore(webapp2.RequestHandler):
             parent = user_key(user.nickname()).get()
             tagList = parent.tagList
             blogList = parent.blogList
-            logging.error(type(post[0].content))
             template_values = {
             'tagList': tagList,
             'blogList': blogList,
@@ -383,7 +401,10 @@ class ReadMore(webapp2.RequestHandler):
             }
             template = JINJA_ENVIRONMENT.get_template('templates/auth_full_post.html')
             self.response.write(template.render(template_values))
-        else:
+        else:           
+            post[0].viewCount = post[0].viewCount + 1
+            post[0].put()
+
             tag_query = BlogUser.query()
             tags = tag_query.fetch(projection=[BlogUser.tagList])
             tagList =[]
@@ -406,7 +427,6 @@ class GetRSS(webapp2.RequestHandler):
     def get(self):
         user = users.get_current_user()
         blog = self.request.get('blog')
-        logging.error(blog)
         if os.environ.get('HTTP_HOST'): 
             host = os.environ['HTTP_HOST'] 
         else: 
@@ -427,9 +447,66 @@ class GetRSS(webapp2.RequestHandler):
         else:
             self.redirect(users.create_login_url(self.request.uri))
             
+class ImageData(db.Model):
+    author = db.StringProperty()
+    avatar = db.BlobProperty()
+    date = db.DateTimeProperty(auto_now_add=True)
+
+class Image(webapp2.RequestHandler):
+    def get(self):
+        usr = self.request.get('img_id')
+        img_query = db.GqlQuery('SELECT * '
+                                'FROM ImageData '
+                                'WHERE ANCESTOR IS :1 '
+                                'ORDER BY date DESC LIMIT 10',
+                                image_key(str(usr)))
+        
+        image = db.get(img_query[0].key())
+        if image.avatar:
+            self.response.headers['Content-Type'] = 'image/png'
+            self.response.out.write(image.avatar)
+
+def image_key(guestbook_name=None):
+    """Constructs a Datastore key for a Guestbook entity with guestbook_name."""
+    return db.Key.from_path('ImageDB', guestbook_name)
+
+class AddAvatar(webapp2.RequestHandler):
+    def get(self):
+        user = users.get_current_user()
+        template_values = {
+                'usr':user.nickname(),
+        }    
+        template = JINJA_ENVIRONMENT.get_template('templates/add_avatar.html')
+        self.response.write(template.render(template_values))
+
+class UploadAvatar(webapp2.RequestHandler):
+    def post(self):
+        user = users.get_current_user()
+        img_query = db.GqlQuery('SELECT * '
+                                'FROM ImageData '
+                                'WHERE ANCESTOR IS :1 '
+                                'ORDER BY date DESC LIMIT 10',
+                                image_key(user.nickname()))
+        
+        image = db.get(img_query[0].key())
+        imagedata = ImageData(parent = image_key(user.nickname()))
+        imagedata.author = self.request.get('name')
+        avatar = self.request.get('image')
+        avatar = images.resize(avatar, 32, 32)
+        imagedata.avatar = db.Blob(avatar)
+        if image:
+            image.author = imagedata.author
+            image.avatar = imagedata.avatar
+            image.put()
+        else:
+            imagedata.put()
+        query_params = {'author': user.nickname()}
+        self.redirect('/user?'+ urllib.urlencode(query_params))
+            
 
 application = webapp2.WSGIApplication([
-    ('/', UserPage),
+    ('/', Main),
+    ('/user', UserPage),
     ('/new_post', NewPost),
     ('/new_blog', CreateBlog),
     ('/publish', PostPublish),
@@ -438,4 +515,7 @@ application = webapp2.WSGIApplication([
     ('/post_edit', EditPost),
     ('/read_more', ReadMore),
     ('/get_rss', GetRSS),
+    ('/upload_avatar', UploadAvatar),
+    ('/add_avatar', AddAvatar),
+    ('/img',Image),
 ], debug=True)

@@ -32,7 +32,8 @@
                 </form>
             </div>
             <div>{{post.title}}</div>
-            <div>Created by: {{post.author}} on {{post.creation}}</div>
+            <div>Viewed {{post.viewCount}} times</div>
+            <div><img src="img?img_id={{post.author}}">Created by: {{post.author}} on {{post.creation}}</div>
             <div>{{content}}</div>
         </p>
         {% endfor %}

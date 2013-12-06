@@ -11,7 +11,11 @@
             </form>
         </div>
         <div>
-            <a href="{{ url|safe }}">Login</a> to start Writing!
+            <a href="{{ url|safe }}">{{url_linktext}}</a>
+        {% if mypage %}
+            <a href="{{ mypage }}">MyWire</a>
+        {% endif %}
+        <a href="/">Home</a>
         </div>
         {% for post in postList %}
         <p>
@@ -24,7 +28,8 @@
                 </form>
             </div>
             <div>{{post.title}}</div>
-            <div>Created by: {{post.author}} on {{post.creation}}</div>
+            <div>Views: {{post.viewCount}}</div>
+            <div><img src="img?img_id={{post.author}}">Created by: {{post.author}} on {{post.creation}}</div>
             <div>Last modified on {{post.date}}, at {{post.time}}.</div>
             <div>{{post.content|truncate(500)}}<a href="/read_more?uid={{post.uid}}">Read More</a></div>
         </p>

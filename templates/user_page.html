@@ -20,6 +20,9 @@
         <div>
             <a href="/new_blog?author={{author}}">Add a new blog</a>
             <a href="/new_post?author={{author}}">Add a new post</a>
+            <a href="/user">MyWire</a>
+            <a href="/">Home</a>
+            <a href="/add_avatar">Update Avatar</a>
         </div>
         {% if rss_blog %}
             <a href="/get_rss?blog={{rss_blog}}">Get RSS</a>
@@ -30,16 +33,19 @@
             <div>Tagged in:
                 <form>
             {% for tag in post.tag %}
-                    <input type="submit" value="{{tag}}" formmethod="post" formaction="/tag?author={{ author }}&tag={{tag}}">
+                <input type="submit" value="{{tag}}" formmethod="post" formaction="/tag?author={{ author }}&tag={{tag}}">
             {% endfor %}
                 </form>
             </div>
-            <div>{{post.title}} <a href="/post_edit?uid={{post.uid}}">edit</a></div>
+            <div>
+                <img src="img?img_id={{post.author}}">
+                {{post.title}} <a href="/post_edit?uid={{post.uid}}">edit</a>
+            </div>
+            <div>Views: {{post.viewCount}}</div>
             <div>Created by: {{post.author}} on {{post.creation}}</div>
             <div>Last modified on {{post.date}}, at {{post.time}}.</div>
             <div>{{post.content|truncate(500)}} <a href="/read_more?uid={{post.uid}}">Read More</a></div>
         </p>
         {% endfor %}
     <p><a href="{{ url|safe }}">{{ url_linktext }}</a></p>
-    <p><a href="/">Home</a></p>
 {% endautoescape %}

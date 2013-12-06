@@ -49,3 +49,9 @@ indexes:
   properties:
   - name: creation
     direction: desc
+
+- kind: ImageData
+  ancestor: yes
+  properties:
+  - name: date
+    direction: desc
