@@ -41,13 +41,15 @@ class Main(webapp2.RequestHandler):
             postList[i].content = jinja2.Markup(postList[i].content)            
          
         if user:
-            url = users.create_logout_url(self.request.uri)
+            url = users.create_logout_url('/')
             url_linktext = 'Logout'
-            mypage = '/user'
+            mypage = '/user?author='+user.nickname()
+            isguest=''
         else:
-            url = users.create_login_url(self.request.uri)
+            url = users.create_login_url('/')
             url_linktext = 'Login'
-            mypage = ''
+            mypage = '/user?author=guest'
+            isguest='true'
         tag_query = BlogUser.query()
         tags = tag_query.fetch(projection=[BlogUser.tagList])
         tagList =[]
@@ -61,6 +63,7 @@ class Main(webapp2.RequestHandler):
         'url': url,
         'url_linktext':url_linktext,
         'mypage':mypage,
+        'guest':isguest,
         }
 
         template = JINJA_ENVIRONMENT.get_template('templates/homepage.html')
@@ -71,32 +74,48 @@ class Main(webapp2.RequestHandler):
 
 class UserPage(webapp2.RequestHandler):
     def get(self):
+        req_user = str(urllib.url2pathname(self.request.get('author')))
         user = users.get_current_user()
-        if user:
-            curs = Cursor(urlsafe=self.request.get('cursor'))
-            user_query = BlogUser.query(BlogUser.author == user)
-            userDB = user_query.fetch()
-            url = users.create_logout_url(self.request.uri)
-            url_linktext = 'Logout'
-            post_query = BlogPost.query(
-            ancestor=user_key(user.nickname())).order(-BlogPost.creation)
-            posts, next_curs, more = post_query.fetch_page(10, start_cursor=curs)
+        if req_user:
+            if user:
+                name = user.nickname()
+                url = users.create_logout_url('/')
+                url_linktext = 'Logout'
+            else:
+                name= ''
+                url = users.create_login_url('/')
+                url_linktext = 'Login'
+            if  name == req_user:
+                edit = 'true'
+            else:
+                edit = ''
 
+            curs = Cursor(urlsafe=self.request.get('cursor'))
+            user_query = BlogUser.query(BlogUser.author == req_user)
+            userDB = user_query.fetch()
+            post_query = BlogPost.query(
+            ancestor=user_key(req_user)).order(-BlogPost.creation)
+            posts, next_curs, more = post_query.fetch_page(10, start_cursor=curs)
+            user = users.get_current_user()
+
+            
             for i in xrange(len(posts)):
                 posts[i].content = jinja2.Markup(posts[i].content)
             
             if userDB:
-                parent = user_key(user.nickname()).get()
+                parent = user_key(req_user).get()
                 tagList = parent.tagList
                 blogList = parent.blogList
             
                 template_values = {
                 'tagList': tagList,
                 'blogList': blogList,
-                'author': user.nickname(),
+                'author': req_user,
+                'user': name,
                 'postList': posts,
                 'url': url,
                 'url_linktext': url_linktext,
+                'edit':edit,
                 }
 
                 template = JINJA_ENVIRONMENT.get_template('templates/user_page.html')
@@ -112,13 +131,13 @@ class UserPage(webapp2.RequestHandler):
                 }
                 
                 new_user = BlogUser(key = ndb.Key('BlogUser',user.nickname()),
-                                    author = user)
+                                    author = user.nickname())
                 new_user.put()
 
                 template = JINJA_ENVIRONMENT.get_template('templates/user_welcome.html')
                 self.response.write(template.render(template_values))
         else:
-            self.redirect(users.create_login_url(self.request.uri))
+            self.redirect(users.create_login_url('/'))
             
 
 class NewPost(webapp2.RequestHandler):
@@ -126,7 +145,7 @@ class NewPost(webapp2.RequestHandler):
     def get(self):
         user = users.get_current_user()
         if user :
-            url = users.create_logout_url(self.request.uri)
+            url = users.create_logout_url('/')
             url_linktext = 'Logout'
             blogList = BlogUser.get_by_id(user.nickname()).blogList
             template_values = {
@@ -138,7 +157,7 @@ class NewPost(webapp2.RequestHandler):
             template = JINJA_ENVIRONMENT.get_template('templates/new_entry.html')
             self.response.write(template.render(template_values))
         else:
-            self.redirect(users.create_login_url(self.request.uri))
+            self.redirect(users.create_login_url('/'))
 
 class BlogPost(ndb.Model):
     """Models an individual Guestbook entry with author, content, and date."""
@@ -156,7 +175,7 @@ class BlogPost(ndb.Model):
 
 class BlogUser(ndb.Model):
     """Models a blog user"""
-    author = ndb.UserProperty()
+    author = ndb.StringProperty(indexed=True)
     blogList = ndb.StringProperty(repeated=True)
     tagList = ndb.StringProperty(repeated=True)
 
@@ -171,30 +190,30 @@ class CreateBlog(webapp2.RequestHandler):
             template = JINJA_ENVIRONMENT.get_template('templates/new_blog.html')
             self.response.write(template.render(template_values))
         else:
-            self.redirect(users.create_login_url(self.request.uri))
+            self.redirect(users.create_login_url('/'))
     
     def post(self):
-        authorName = str(self.request.get('author'))
+        authorName = str(urllib.url2pathname(self.request.get('author')))
         blogTitle = str(self.request.get('blog_name'))
         blogUser = user_key(authorName).get()
         blogUser.blogList.append(blogTitle)
         blogUser.blogList = list(set(blogUser.blogList))
         blogUser.put()
         query_params = {'author': authorName}
-        self.redirect('/?'+ urllib.urlencode(query_params))
+        self.redirect('/user?'+ urllib.urlencode(query_params))
 
 class PostPublish(webapp2.RequestHandler):
     def post(self):
         uid = str(uuid.uuid1())
         user = users.get_current_user()
         new_post = BlogPost(id =uid, parent = user_key(user.nickname()))
-        new_post.author = self.request.get('author')
+        new_post.author = str(urllib.url2pathname(self.request.get('author')))
         new_post.blogName = self.request.get('topic')
         new_post.title = self.request.get('title', DEFAULT_TITLE_NAME)
         new_post.content = self.request.get('content')
         
-        link= re.compile(r'<\s*(https?://w*\.(\S+)\.co\S+)\s*>')
-        img = re.compile(r'<\s*(https?://.+/(\S+)\.(jpg|gif|png))\s*>')
+        link= re.compile(r'<\s*(https?://w*\.?(\S+)\.co\S+)\s*>')
+        img = re.compile(r'<\s*(https?://.+/(\S+)\.(jpg|jpeg|gif|png))\s*>')
         
         new_post.content = img.sub(r'<img src="\1" alt="\2">',new_post.content)        
         new_post.content = link.sub(r'<a href="\1">\2</a>',new_post.content)        
@@ -213,7 +232,7 @@ class PostPublish(webapp2.RequestHandler):
         owner.tagList = list(set(owner.tagList))
         owner.put()
         query_params = {'author': user.nickname()}
-        self.redirect('/?'+ urllib.urlencode(query_params))
+        self.redirect('/user?'+ urllib.urlencode(query_params))
 
 class EditPost(webapp2.RequestHandler):
     
@@ -257,14 +276,14 @@ class EditPost(webapp2.RequestHandler):
         
         new_post = BlogPost(id = self.request.get('uid'),
                             parent = user_key(user.nickname()))
-        new_post.author = self.request.get('author')
+        new_post.author = str(urllib.url2pathname(self.request.get('author')))
         new_post.blogName = self.request.get('topic')
         new_post.title = self.request.get('title', DEFAULT_TITLE_NAME)
         new_post.content = self.request.get('content')
         new_post.uid = str(self.request.get('uid'))
 
         link= re.compile(r'<\s*(https?://w*\.(\S+)\.co\S+)\s*>')
-        img = re.compile(r'<\s*(https?://.+/(\S+)\.(jpg|gif|png))\s*>')
+        img = re.compile(r'<\s*(https?://.+/(\S+)\.(jpg|jpeg|gif|png))\s*>')
         
         new_post.content = img.sub(r'<img src="\1" alt="\2">',new_post.content)        
         new_post.content = link.sub(r'<a href="\1">\2</a>',new_post.content)        
@@ -289,7 +308,7 @@ class EditPost(webapp2.RequestHandler):
 class TaggedPost(webapp2.RequestHandler):
     def post(self):
         tag = str(self.request.get('tag'))
-        author = str(self.request.get('author'))
+        author = str(urllib.url2pathname(self.request.get('author')))
         user = users.get_current_user()
         
         if author:
@@ -300,20 +319,27 @@ class TaggedPost(webapp2.RequestHandler):
         curs = Cursor(urlsafe=self.request.get('cursor'))
         posts, next_curs, more = post_query.fetch_page(10, start_cursor=curs)
         
-        if user:
-            url = users.create_logout_url(self.request.uri)
+        if author and user:
+            url = users.create_logout_url('/')
             url_linktext = 'Logout'
-            parent = user_key(user.nickname()).get()
+            parent = user_key(author).get()
             tagList = parent.tagList
             blogList = parent.blogList
+            
+            if user.nickname() == author:
+                edit = 'true'
+            else:
+                edit = ''
             
             template_values = {
             'tagList': tagList,
             'blogList': blogList,
-            'author': user.nickname(),
+            'author': author,
+            'user': user.nickname(),
             'postList': posts,
             'url': url,
             'url_linktext': url_linktext,
+            'edit':edit,
             }
 
             template = JINJA_ENVIRONMENT.get_template('templates/user_page.html')
@@ -322,24 +348,31 @@ class TaggedPost(webapp2.RequestHandler):
                     self.response.out.write('<a href="/?cursor=%s">More...</a>' % next_curs.urlsafe())
             self.response.out.write('</body></html>')
         else:
-            blogpost_query = BlogPost.query(BlogPost.tag.IN([tag])).order(-BlogPost.creation)
-            postList = blogpost_query.fetch(10)
-            url = users.create_login_url(self.request.uri)
+            if user:
+                url = users.create_logout_url('/')
+                url_linktext = 'Logout'
+            else:
+                url = users.create_login_url('/')
+                url_linktext = 'Login'
             template_values = {
                 'query_tag': tag,
-                'postList': postList,
+                'postList': posts,
                 'url': url,
+                'url_linktext' : url_linktext,
             }
 
             template = JINJA_ENVIRONMENT.get_template('templates/tag_posts.html')
             self.response.write(template.render(template_values))
+            if more and next_curs:
+                    self.response.out.write('<a href="/?cursor=%s">More...</a>' % next_curs.urlsafe())
+            self.response.out.write('</body></html>')
     def get(self):
         self.redirect('/')
 
 class BlogTopic(webapp2.RequestHandler):
     def post(self):
         blog = str(self.request.get('blog'))
-        author = str(self.request.get('author'))
+        author = str(urllib.url2pathname(self.request.get('author')))
         user = users.get_current_user()
         
         post_query = BlogPost.query(BlogPost.author == author,
@@ -347,21 +380,34 @@ class BlogTopic(webapp2.RequestHandler):
         curs = Cursor(urlsafe=self.request.get('cursor'))
         posts, next_curs, more = post_query.fetch_page(10, start_cursor=curs)
         
-        if user:
-            url = users.create_logout_url(self.request.uri)
-            url_linktext = 'Logout'
-            parent = user_key(user.nickname()).get()
+        if author:
+            if user:
+                url = users.create_logout_url('/')
+                url_linktext = 'Logout'
+                name = user.nickname()
+            else:
+                url = users.create_login_url('/')
+                url_linktext = 'Login'
+                name ='guest'
+            parent = user_key(author).get()
             tagList = parent.tagList
             blogList = parent.blogList
+
+            if author == name:
+                edit = 'true'
+            else:
+                edit = ''
             
             template_values = {
             'tagList': tagList,
             'blogList': blogList,
-            'author': user.nickname(),
+            'author': author,
+            'user': name,
             'postList': posts,
             'url': url,
             'url_linktext': url_linktext,
             'rss_blog':blog,
+            'edit':edit,
             }
 
             template = JINJA_ENVIRONMENT.get_template('templates/user_page.html')
@@ -370,22 +416,24 @@ class BlogTopic(webapp2.RequestHandler):
                     self.response.out.write('<a href="/?cursor=%s">More...</a>' % next_curs.urlsafe())
             self.response.out.write('</body></html>')
         else:
-            self.redirect(users.create_login_url(self.request.uri))
+            self.redirect(users.create_login_url('/'))
 
     def get(self):
         self.redirect('/')
 
 class ReadMore(webapp2.RequestHandler):
     def get(self):
-        
+        req_user = str(urllib.url2pathname(self.request.get('author')))
         uid = str(self.request.get('uid'))
         user = users.get_current_user()
-        
         post_query = BlogPost.query(BlogPost.uid == uid)
         post = post_query.fetch()
         
-        if user:
-            url = users.create_logout_url(self.request.uri)
+        if user and req_user == user.nickname():
+            if user.nickname() != post[0].author :
+                post[0].viewCount = post[0].viewCount + 1
+                post[0].put()
+            url = users.create_logout_url('/')
             url_linktext = 'Logout'
             parent = user_key(user.nickname()).get()
             tagList = parent.tagList
@@ -393,7 +441,8 @@ class ReadMore(webapp2.RequestHandler):
             template_values = {
             'tagList': tagList,
             'blogList': blogList,
-            'author': user.nickname(),
+            'user': user.nickname(),
+            'author': req_user,
             'content':jinja2.Markup(post[0].content),
             'postList': post,
             'url': url,
@@ -412,7 +461,7 @@ class ReadMore(webapp2.RequestHandler):
                 tagList = tagList+tags[i].tagList
             tagList = list(set(tagList))
             tagList = map(str, tagList)
-            url = users.create_login_url(self.request.uri)
+            url = users.create_login_url('/')
             template_values = {
             'tagList': tagList,
             'content':jinja2.Markup(post[0].content),
@@ -425,19 +474,20 @@ class ReadMore(webapp2.RequestHandler):
 
 class GetRSS(webapp2.RequestHandler):
     def get(self):
+        req_user = str(urllib.url2pathname(self.request.get('author')))
         user = users.get_current_user()
         blog = self.request.get('blog')
         if os.environ.get('HTTP_HOST'): 
             host = os.environ['HTTP_HOST'] 
         else: 
             host = os.environ['SERVER_NAME']
-        post_query = BlogPost.query(BlogPost.author == user.nickname(),
+        post_query = BlogPost.query(BlogPost.author == req_user,
                                     BlogPost.blogName == blog).order(-BlogPost.creation)
         posts = post_query.fetch()
         
-        if user :
+        if req_user :
             template_values = {
-                'author': user.nickname(),
+                'author': req_user,
                 'host':host,
                 'postList':posts,
             }
@@ -445,7 +495,7 @@ class GetRSS(webapp2.RequestHandler):
             template = JINJA_ENVIRONMENT.get_template('templates/get_rss.rss')
             self.response.write(template.render(template_values))
         else:
-            self.redirect(users.create_login_url(self.request.uri))
+            self.redirect(users.create_login_url('/'))
             
 class ImageData(db.Model):
     author = db.StringProperty()
@@ -488,13 +538,14 @@ class UploadAvatar(webapp2.RequestHandler):
                                 'ORDER BY date DESC LIMIT 10',
                                 image_key(user.nickname()))
         
-        image = db.get(img_query[0].key())
+
         imagedata = ImageData(parent = image_key(user.nickname()))
         imagedata.author = self.request.get('name')
         avatar = self.request.get('image')
         avatar = images.resize(avatar, 32, 32)
         imagedata.avatar = db.Blob(avatar)
-        if image:
+        if img_query.count():
+            image = db.get(img_query[0].key())
             image.author = imagedata.author
             image.avatar = imagedata.avatar
             image.put()
@@ -502,7 +553,42 @@ class UploadAvatar(webapp2.RequestHandler):
             imagedata.put()
         query_params = {'author': user.nickname()}
         self.redirect('/user?'+ urllib.urlencode(query_params))
-            
+
+class Search(webapp2.RequestHandler):
+    def post(self):
+        user = users.get_current_user()
+        search_str = self.request.get('query')
+        blogpost_query = BlogPost.query().order(-BlogPost.creation)
+        postList = blogpost_query.fetch()
+        positives = []
+        for i in xrange(len(postList)):
+            if search_str.lower() in postList[i].content.lower() or search_str.lower() in postList[i].title.lower():
+                positives.append(postList[i])
+        if user:
+            url = users.create_logout_url('/')
+            url_linktext = 'Logout'
+            mypage = '/user?author='+user.nickname()
+        else:
+            url = users.create_login_url('/')
+            url_linktext = 'Login'
+            mypage = '/user?author=guest'
+        tag_query = BlogUser.query()
+        tags = tag_query.fetch(projection=[BlogUser.tagList])
+        tagList =[]
+        for i in xrange(len(tags)):
+            tagList = tagList+tags[i].tagList
+        tagList = list(set(tagList))
+        tagList = map(str, tagList)
+        template_values = {
+        'tagList': tagList,
+        'postList': positives,
+        'url': url,
+        'url_linktext':url_linktext,
+        'mypage':mypage,
+        }
+
+        template = JINJA_ENVIRONMENT.get_template('templates/homepage.html')
+        self.response.write(template.render(template_values))
 
 application = webapp2.WSGIApplication([
     ('/', Main),
@@ -517,5 +603,6 @@ application = webapp2.WSGIApplication([
     ('/get_rss', GetRSS),
     ('/upload_avatar', UploadAvatar),
     ('/add_avatar', AddAvatar),
-    ('/img',Image),
+    ('/img', Image),
+    ('/search', Search),
 ], debug=True)

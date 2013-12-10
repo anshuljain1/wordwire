@@ -5,6 +5,8 @@ api_version: 1
 threadsafe: true
 
 handlers:
+- url: /Images
+  static_dir: Images
 - url: /.*
   script: blog.application
 
@@ -15,3 +17,6 @@ libraries:
   version: latest
 - name: PIL
   version: latest
+
+inbound_services:
+- mail

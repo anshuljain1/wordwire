@@ -2,7 +2,9 @@
 {% autoescape true %}
 <html>
 	<body>
+        {%if edit%}
         <div>Welcome, {{author}}!</div>
+        {% endif %}
         <div>Blog Categories:<br>
             <form>
             {% for blog in blogList %}
@@ -18,15 +20,25 @@
             </form>
         </div>
         <div>
+            {%if edit%}
             <a href="/new_blog?author={{author}}">Add a new blog</a>
             <a href="/new_post?author={{author}}">Add a new post</a>
-            <a href="/user">MyWire</a>
+            <a href="/add_avatar?={{author}}">Update Avatar</a>
+            <a href="/user?author={{user}}">MyWire</a>
+            {% endif %}
             <a href="/">Home</a>
-            <a href="/add_avatar">Update Avatar</a>
         </div>
         {% if rss_blog %}
-            <a href="/get_rss?blog={{rss_blog}}">Get RSS</a>
+            <a href="/get_rss?author={{author}}&blog={{rss_blog}}">Get RSS</a>
         {% endif %}
+        <div>
+            <br>
+            <p>
+            <form action="/search" method="post" >
+                <textarea name="query" rows="1" cols="10"></textarea><input type="submit" value="Search">
+            </form>
+            </p>
+        </div>
         {% for post in postList %}
         <p>
             <div><font size="2">{{post.blogName}}</font></div>
@@ -39,12 +51,12 @@
             </div>
             <div>
                 <img src="img?img_id={{post.author}}">
-                {{post.title}} <a href="/post_edit?uid={{post.uid}}">edit</a>
+                {{post.title}} {%if edit%}<a href="/post_edit?uid={{post.uid}}">edit</a>{% endif %}
             </div>
             <div>Views: {{post.viewCount}}</div>
             <div>Created by: {{post.author}} on {{post.creation}}</div>
             <div>Last modified on {{post.date}}, at {{post.time}}.</div>
-            <div>{{post.content|truncate(500)}} <a href="/read_more?uid={{post.uid}}">Read More</a></div>
+            <div>{{post.content|truncate(500)}} <a href="/read_more?author={{post.author}}&uid={{post.uid}}">Read More</a></div>
         </p>
         {% endfor %}
     <p><a href="{{ url|safe }}">{{ url_linktext }}</a></p>

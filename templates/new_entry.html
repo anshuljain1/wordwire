@@ -2,6 +2,9 @@
 {% autoescape true %}
 <html>
 	<body>
+		<a href="{{ url|safe }}">{{ url_linktext }}</a>
+        <a href="/">Home</a>
+        <a href="/user?author={{ author }}">MyWire</a>
 		<form action="/publish?author={{ author }}" method="post">
 			<div>Title<br><textarea name="title" rows="2" cols="150"></textarea></div>
             <div>Blog Categories:<br><select name="topic">
@@ -13,7 +16,6 @@
 			<div>Content<br>P.S.: To enter hyperlinks and images just enclose them in <>. Example: &#60 http://theverge.com &#62 or &#60 http://sample.jpg &#62 <textarea name="content" rows="20" cols="150"></textarea></div>
 			<div><input type="submit" value="Post it!"></div>
 		</form>
-		<a href="{{ url|safe }}">{{ url_linktext }}</a>
 	</body>
 </html>
 {% endautoescape %}

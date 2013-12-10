@@ -4,7 +4,8 @@
         {% for post in postList %}
         <item>
             <title>{{post.title}}</title>
-            <link>http://{{host}}/read_more?uid={{post.uid}}</link>
+            <link>http://{{host}}/read_more?author={{post.author}}&amp;uid={{post.uid}}</link>
+            <pubDate>{{post.date}}</pubDate>
             <description>{{post.content|truncate(200)}}</description>
         </item>
         {% endfor %}
