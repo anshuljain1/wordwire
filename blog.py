@@ -50,6 +50,7 @@ class BlogUser(ndb.Model):
     author = ndb.StringProperty(indexed=True)
     blogList = ndb.StringProperty(repeated=True)
     tagList = ndb.StringProperty(repeated=True)
+    followedUsers = ndb.StringProperty(repeated=True)
 
 class Main(webapp2.RequestHandler):
     def get(self):
@@ -93,19 +94,62 @@ class Main(webapp2.RequestHandler):
             self.response.out.write('<a href="/?cursor=%s">More...</a>' % next_curs.urlsafe())
             self.response.out.write('</body></html>')
 
+class FollowedPosts(webapp2.RequestHandler):
+    def get(self):
+        user = users.get_current_user()
+        if user:
+            user_query = BlogUser.query(BlogUser.author == user.nickname())
+            userDB = user_query.fetch()
+            url = users.create_logout_url('/')
+            url_linktext = 'Logout'
+            if userDB:
+                cur_usr = userDB[0]
+                postList = []
+                for followedUsr in cur_usr.followedUsers:
+                    post_query = BlogPost.query(ancestor=user_key(followedUsr)).order(-BlogPost.date)
+                    posts, next_curs, more = post_query.fetch_page(10)
+                    for post in posts:
+                        postList.append(post)
+
+                template_values = {
+                'tagList': cur_usr.tagList,
+                'blogList': cur_usr.blogList,
+                'author': user.nickname(),
+                'postList': postList,
+                'url': url,
+                'url_linktext': url_linktext,
+                }
+
+                template = JINJA_ENVIRONMENT.get_template('templates/followed_posts.html')
+                self.response.write(template.render(template_values))
+            
 class UserPage(webapp2.RequestHandler):
     def get(self):
         req_user = str(urllib.url2pathname(self.request.get('author')))
         user = users.get_current_user()
+        follow_usr_url = ''
+        follow_usr_url_linktext = ''
         if req_user:
             if user:
                 name = user.nickname()
                 url = users.create_logout_url('/')
                 url_linktext = 'Logout'
+                user_query = BlogUser.query(BlogUser.author == user.nickname())
+                userDB = user_query.fetch()
+                if userDB:
+                    cur_usr = userDB[0]
+                    if user.nickname() != req_user:
+                        if req_user in cur_usr.followedUsers:
+                            follow_usr_url = '/unFollowUsr?usr='+req_user
+                            follow_usr_url_linktext = 'UnFollow'
+                        else:
+                            follow_usr_url = '/followUsr?usr='+req_user
+                            follow_usr_url_linktext = 'Follow'
             else:
                 name= ''
                 url = users.create_login_url('/')
                 url_linktext = 'Login'
+
             if  name == req_user:
                 edit = 'true'
             else:
@@ -137,6 +181,8 @@ class UserPage(webapp2.RequestHandler):
                 'url': url,
                 'url_linktext': url_linktext,
                 'edit':edit,
+                'follow_usr_url':follow_usr_url,
+                'follow_usr_url_linktext':follow_usr_url_linktext,
                 }
 
                 template = JINJA_ENVIRONMENT.get_template('templates/user_page.html')
@@ -225,7 +271,10 @@ class PostPublish(webapp2.RequestHandler):
         new_post.viewCount = 0
         new_post.uid = uid
         tag = self.request.get('tags')
+        tag = tag.lower()
         tag = tag.split(',')
+        tag = filter(None, tag)
+        
         for i in xrange(len(tag)):
             tag[i] = tag[i].lstrip(' ')
             tag[i]=tag[i].rstrip(' ')
@@ -454,7 +503,13 @@ class ReadMore(webapp2.RequestHandler):
             }
             template = JINJA_ENVIRONMENT.get_template('templates/auth_full_post.html')
             self.response.write(template.render(template_values))
-        else:           
+        else:
+            if user:
+               url = users.create_logout_url('/')
+               url_linktext = 'Logout'
+            else:
+               url = users.create_login_url('/')
+               url_linktext = 'Login'
             post[0].viewCount = post[0].viewCount + 1
             post[0].put()
 
@@ -471,6 +526,7 @@ class ReadMore(webapp2.RequestHandler):
             'content':jinja2.Markup(post[0].content),
             'postList': post,
             'url': url,
+            'url_linktext': url_linktext,
             }
 
             template = JINJA_ENVIRONMENT.get_template('templates/gen_full_post.html')
@@ -479,7 +535,6 @@ class ReadMore(webapp2.RequestHandler):
 class GetRSS(webapp2.RequestHandler):
     def get(self):
         req_user = str(urllib.url2pathname(self.request.get('author')))
-        user = users.get_current_user()
         blog = self.request.get('blog')
         if os.environ.get('HTTP_HOST'): 
             host = os.environ['HTTP_HOST'] 
@@ -573,13 +628,8 @@ class UsrImageData(db.Model):
 
 class GetImage(webapp2.RequestHandler):
     def get(self):
-        user = users.get_current_user()
         img_id = str(self.request.get('img_id'))
-        host = self.request.host
         
-#        imageData = db.Query(UsrImageData)
-#        imageData.filter('imgId =', img_id)
-#        imageData.fetch(100)
         imageData = UsrImageData.all()
         imageData.filter('imgId =', img_id)
         if imageData:
@@ -671,6 +721,38 @@ class Search(webapp2.RequestHandler):
         template = JINJA_ENVIRONMENT.get_template('templates/homepage.html')
         self.response.write(template.render(template_values))
 
+class FollowUser(webapp2.RequestHandler):
+    def get(self):
+        user = users.get_current_user()
+        if user:
+            follow_usr_name = self.request.get('usr')
+            user_query = BlogUser.query(BlogUser.author == user.nickname())
+            userDB = user_query.fetch()
+            cur_usr = userDB[0]
+            cur_usr.followedUsers.append(follow_usr_name)
+            cur_usr.followedUsers = list(set(cur_usr.followedUsers))
+            cur_usr.put()
+            redirectUrl = '/user?author='+user.nickname()
+            self.redirect(redirectUrl)
+        else:
+           self.redirect(users.create_login_url('/'))
+
+class UnFollowUser(webapp2.RequestHandler):
+    def get(self):
+        user = users.get_current_user()
+        if user:
+            follow_usr_name = self.request.get('usr')
+            user_query = BlogUser.query(BlogUser.author == user.nickname())
+            userDB = user_query.fetch()
+            cur_usr = userDB[0]
+            cur_usr.followedUsers.remove(follow_usr_name)
+            cur_usr.put()
+            redirectUrl = '/user?author='+user.nickname()
+            self.redirect(redirectUrl)
+        else:
+           self.redirect(users.create_login_url('/'))
+
+
 application = webapp2.WSGIApplication([
     ('/', Main),
     ('/user', UserPage),
@@ -690,4 +772,7 @@ application = webapp2.WSGIApplication([
     ('/add_img', AddImage),
     ('/usr_img', GetImage),
     ('/view_images', ImagePage),
+    ('/followUsr', FollowUser),
+    ('/unFollowUsr', UnFollowUser),
+    ('/followedPosts', FollowedPosts),
 ], debug=True)

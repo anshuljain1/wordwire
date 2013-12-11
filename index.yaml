@@ -56,6 +56,12 @@ indexes:
   - name: creation
     direction: desc
 
+- kind: BlogPost
+  ancestor: yes
+  properties:
+  - name: date
+    direction: desc
+
 - kind: ImageData
   ancestor: yes
   properties:

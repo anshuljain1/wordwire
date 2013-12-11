@@ -5,7 +5,7 @@
         {%if edit%}
         <div>Welcome, {{author}}!</div>
         {% endif %}
-        <div>Blog Categories:<br>
+        <div>Your Blog Categories:<br>
             <form>
             {% for blog in blogList %}
                 <input type="submit" value="{{blog}}" formmethod="post" formaction="/blog?author={{ author }}&blog={{blog}}">
@@ -20,23 +20,14 @@
             </form>
         </div>
         <div>
-            {%if edit%}
             <a href="/new_blog?author={{author}}">Add a new blog</a>
             <a href="/new_post?author={{author}}">Add a new post</a>
             <a href="/add_avatar?={{author}}">Update Avatar</a>
             <a href="/add_img?author={{author}}">Add Image</a>
             <a href="/view_images?author={{author}}">My Images</a>
-            <a href="/followedPosts?author={{author}}">Followed Post</a>
-            <a href="/user?author={{user}}">MyWire</a>
-            {% endif %}
-            {%if follow_usr_url%}
-                <a href="{{follow_usr_url}}">{{follow_usr_url_linktext}}</a>
-            {% endif %}
+            <a href="/user?author={{author}}">MyWire</a>
             <a href="/">Home</a>
         </div>
-        {% if rss_blog %}
-            <a href="/get_rss?author={{author}}&blog={{rss_blog}}">Get RSS</a>
-        {% endif %}
         <div>
             <br>
             <p>
@@ -45,13 +36,14 @@
             </form>
             </p>
         </div>
+    
         {% for post in postList %}
         <p>
             <div><font size="2">{{post.blogName}}</font></div>
             <div>Tagged in:
                 <form>
             {% for tag in post.tag %}
-                <input type="submit" value="{{tag}}" formmethod="post" formaction="/tag?author={{ author }}&tag={{tag}}">
+                <input type="submit" value="{{tag}}" formmethod="post" formaction="/tag?author={{ post.author }}&tag={{tag}}">
             {% endfor %}
                 </form>
             </div>
