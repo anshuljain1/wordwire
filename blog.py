@@ -30,6 +30,27 @@ def wordwire_key(author_ID):
     """ Constructs a datastore entry for WordWire Blog"""
     return ndb.Key('WordWire',author_ID)
 
+
+class BlogPost(ndb.Model):
+    """Models an individual Guestbook entry with author, content, and date."""
+    author = ndb.StringProperty(indexed=True)
+    blogName = ndb.StringProperty(indexed=True)
+    content = ndb.StringProperty(indexed=False)
+    title = ndb.StringProperty(indexed=False)
+    creation = ndb.DateTimeProperty(auto_now_add=True)
+    date = ndb.DateProperty(auto_now_add=True)
+    time = ndb.TimeProperty(auto_now_add=True)
+    tag = ndb.StringProperty(repeated=True)
+    uid = ndb.StringProperty()
+    upvote = ndb.IntegerProperty(indexed=False)
+    viewCount = ndb.IntegerProperty(indexed=False)
+
+class BlogUser(ndb.Model):
+    """Models a blog user"""
+    author = ndb.StringProperty(indexed=True)
+    blogList = ndb.StringProperty(repeated=True)
+    tagList = ndb.StringProperty(repeated=True)
+
 class Main(webapp2.RequestHandler):
     def get(self):
         user = users.get_current_user()
@@ -159,26 +180,6 @@ class NewPost(webapp2.RequestHandler):
         else:
             self.redirect(users.create_login_url('/'))
 
-class BlogPost(ndb.Model):
-    """Models an individual Guestbook entry with author, content, and date."""
-    author = ndb.StringProperty(indexed=True)
-    blogName = ndb.StringProperty(indexed=True)
-    content = ndb.StringProperty(indexed=False)
-    title = ndb.StringProperty(indexed=False)
-    creation = ndb.DateTimeProperty(auto_now_add=True)
-    date = ndb.DateProperty(auto_now_add=True)
-    time = ndb.TimeProperty(auto_now_add=True)
-    tag = ndb.StringProperty(repeated=True)
-    uid = ndb.StringProperty()
-    upvote = ndb.IntegerProperty(indexed=False)
-    viewCount = ndb.IntegerProperty(indexed=False)
-
-class BlogUser(ndb.Model):
-    """Models a blog user"""
-    author = ndb.StringProperty(indexed=True)
-    blogList = ndb.StringProperty(repeated=True)
-    tagList = ndb.StringProperty(repeated=True)
-
 class CreateBlog(webapp2.RequestHandler):
     def get(self):
         user = users.get_current_user()
@@ -214,9 +215,12 @@ class PostPublish(webapp2.RequestHandler):
         
         link= re.compile(r'<\s*(https?://w*\.?(\S+)\.co\S+)\s*>')
         img = re.compile(r'<\s*(https?://.+/(\S+)\.(jpg|jpeg|gif|png))\s*>')
+        locimg = re.compile(r'<\s*(https?://\S+/usr_img\?img_id(\S+))\s*>')
         
-        new_post.content = img.sub(r'<img src="\1" alt="\2">',new_post.content)        
-        new_post.content = link.sub(r'<a href="\1">\2</a>',new_post.content)        
+        new_post.content = img.sub(r'<img src="\1" alt="\2">',new_post.content)
+        new_post.content = locimg.sub(r'<img src="\1" alt="\2">',new_post.content)      
+        new_post.content = link.sub(r'<a href="\1">\2</a>',new_post.content)  
+        
         new_post.upvote = 0
         new_post.viewCount = 0
         new_post.uid = uid
@@ -481,6 +485,7 @@ class GetRSS(webapp2.RequestHandler):
             host = os.environ['HTTP_HOST'] 
         else: 
             host = os.environ['SERVER_NAME']
+        host = self.request.host
         post_query = BlogPost.query(BlogPost.author == req_user,
                                     BlogPost.blogName == blog).order(-BlogPost.creation)
         posts = post_query.fetch()
@@ -496,29 +501,30 @@ class GetRSS(webapp2.RequestHandler):
             self.response.write(template.render(template_values))
         else:
             self.redirect(users.create_login_url('/'))
-            
-class ImageData(db.Model):
+
+
+''' User avatar Classes and retrieval functionality '''         
+class AvatarData(db.Model):
     author = db.StringProperty()
     avatar = db.BlobProperty()
     date = db.DateTimeProperty(auto_now_add=True)
 
-class Image(webapp2.RequestHandler):
+class GetAvatar(webapp2.RequestHandler):
     def get(self):
         usr = self.request.get('img_id')
         img_query = db.GqlQuery('SELECT * '
-                                'FROM ImageData '
+                                'FROM AvatarData '
                                 'WHERE ANCESTOR IS :1 '
                                 'ORDER BY date DESC LIMIT 10',
-                                image_key(str(usr)))
-        
+                                avatar_key(str(usr)))
         image = db.get(img_query[0].key())
         if image.avatar:
             self.response.headers['Content-Type'] = 'image/png'
             self.response.out.write(image.avatar)
 
-def image_key(guestbook_name=None):
+def avatar_key(avatar_name=None):
     """Constructs a Datastore key for a Guestbook entity with guestbook_name."""
-    return db.Key.from_path('ImageDB', guestbook_name)
+    return db.Key.from_path('AvatarImageDB', avatar_name)
 
 class AddAvatar(webapp2.RequestHandler):
     def get(self):
@@ -533,13 +539,13 @@ class UploadAvatar(webapp2.RequestHandler):
     def post(self):
         user = users.get_current_user()
         img_query = db.GqlQuery('SELECT * '
-                                'FROM ImageData '
+                                'FROM AvatarData '
                                 'WHERE ANCESTOR IS :1 '
                                 'ORDER BY date DESC LIMIT 10',
-                                image_key(user.nickname()))
+                                avatar_key(user.nickname()))
         
 
-        imagedata = ImageData(parent = image_key(user.nickname()))
+        imagedata = AvatarData(parent = avatar_key(user.nickname()))
         imagedata.author = self.request.get('name')
         avatar = self.request.get('image')
         avatar = images.resize(avatar, 32, 32)
@@ -553,6 +559,81 @@ class UploadAvatar(webapp2.RequestHandler):
             imagedata.put()
         query_params = {'author': user.nickname()}
         self.redirect('/user?'+ urllib.urlencode(query_params))
+
+''' User avatar Classes and retrieval functionality ends here '''   
+
+
+''' User Uploaded Images Classes and retrieval functionality '''   
+class UsrImageData(db.Model):
+    author = db.StringProperty(indexed =True)
+    name = db.StringProperty()
+    image = db.BlobProperty()
+    imgId = db.StringProperty()
+    date = db.DateTimeProperty(auto_now_add=True)
+
+class GetImage(webapp2.RequestHandler):
+    def get(self):
+        user = users.get_current_user()
+        img_id = str(self.request.get('img_id'))
+        host = self.request.host
+        
+#        imageData = db.Query(UsrImageData)
+#        imageData.filter('imgId =', img_id)
+#        imageData.fetch(100)
+        imageData = UsrImageData.all()
+        imageData.filter('imgId =', img_id)
+        if imageData:
+            self.response.headers['Content-Type'] = 'image/png'
+            self.response.out.write(imageData[0].image)
+
+class ImagePage(webapp2.RequestHandler):
+    def get(self):
+        user = users.get_current_user()
+        host = self.request.host
+        images = db.Query(UsrImageData)
+        images.filter('author =', user.nickname())
+        url = users.create_logout_url('/')
+        url_linktext = 'Logout'
+        
+        template_values = {
+                'images': images,
+                'author': user.nickname(),
+                'host':host,
+                'url': url,
+                'url_linktext': url_linktext,
+            }
+            
+        template = JINJA_ENVIRONMENT.get_template('templates/img_page.html')
+        self.response.write(template.render(template_values))
+
+def usrimg_key(user_name=None):
+    """Constructs a Datastore key for a UserImageDB entity with userimg key."""
+    return db.Key.from_path('UserImageDB', user_name)
+
+class AddImage(webapp2.RequestHandler):
+    def get(self):
+        user = users.get_current_user()
+        template_values = {
+                'usr':user.nickname(),
+        }    
+        template = JINJA_ENVIRONMENT.get_template('templates/add_img.html')
+        self.response.write(template.render(template_values))
+
+class UploadImage(webapp2.RequestHandler):
+    def post(self):
+        user = users.get_current_user()
+
+        imagedata = UsrImageData(parent = usrimg_key(user.nickname()))
+        imagedata.author = user.nickname()
+        imagedata.name = self.request.get('name')
+        imagedata.image = db.Blob(self.request.get('image'))
+        imagedata.imgId = str(uuid.uuid1())
+        imagedata.put()
+        query_params = {'author': user.nickname()}
+        
+        self.redirect('/user?'+ urllib.urlencode(query_params))
+
+''' User Uploaded Images Classes and retrieval functionality ends here ''' 
 
 class Search(webapp2.RequestHandler):
     def post(self):
@@ -603,6 +684,10 @@ application = webapp2.WSGIApplication([
     ('/get_rss', GetRSS),
     ('/upload_avatar', UploadAvatar),
     ('/add_avatar', AddAvatar),
-    ('/img', Image),
+    ('/img', GetAvatar),
     ('/search', Search),
+    ('/upload_img', UploadImage),
+    ('/add_img', AddImage),
+    ('/usr_img', GetImage),
+    ('/view_images', ImagePage),
 ], debug=True)

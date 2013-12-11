@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+{% autoescape true %}
+<html>
+	<body>
+        <div>
+            <a href="/user?author={{author}}">MyWire</a>
+            <a href="/">Home</a>
+            <p><a href="{{ url|safe }}">{{ url_linktext }}</a></p>
+        </div>
+        <div>Here are your Images</div>
+        {% for img in images %}
+        <div>
+            <img src="usr_img?img_id={{img.imgId}}">
+            <br>
+            Name: {{img.name}}
+            <br>
+            Ref Link: http://{{host}}/usr_img?img_id={{img.imgId}}
+            <br>
+        </div>
+        {% endfor %}
+    </form>
+    </body>
+</html>
+{% endautoescape %}

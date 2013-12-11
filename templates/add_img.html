@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+{% autoescape true %}
+<html>
+	<body>
+        <div>Upload your new image here!</div>
+    <form name = "input" action = "/upload_img?usr={{usr}}" method = "post" enctype="multipart/form-data">
+        name: <input type = "text" name = "name">
+        image: <input type = "file" name = "image">
+        <div><input type="submit" value="Upload!"></div>
+    </form>
+    </body>
+</html>
+{% endautoescape %}
