@@ -1,13 +1,21 @@
 <!DOCTYPE html>
 {% autoescape true %}
 <html>
+    <head>
+        <link rel="stylesheet" type="text/css" href="/style/update-avatar.css"/>
+    </head>
 	<body>
-        <div>Upload your new avatar here!</div>
+        <div><img src="Images/wordwire_logo.png" width="160"></div>
+        <h2 class="heading">Hey {{usr}}</h2>
+        <hr>
+        <h3 class="update-here">Upload your new avatar here!</h3>
+        <div class="content">
     <form name = "input" action = "/upload_avatar?usr={{usr}}" method = "post" enctype="multipart/form-data">
         name: <input type = "text" name = "name">
         image: <input type = "file" name = "image">
         <div><input type="submit" value="Upload!"></div>
     </form>
+        </div>
     </body>
 </html>
 {% endautoescape %}

@@ -62,6 +62,12 @@ indexes:
   - name: date
     direction: desc
 
+- kind: Comments
+  properties:
+  - name: blogpostID
+  - name: creation
+    direction: desc
+
 - kind: ImageData
   ancestor: yes
   properties:

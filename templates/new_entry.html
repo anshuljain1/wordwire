@@ -1,19 +1,29 @@
 <!DOCTYPE html>
 {% autoescape true %}
-<html>
+<html><head>
+        <link rel="stylesheet" type="text/css" href="/style/new_post.css"/>
+    </head>
 	<body>
-		<a href="{{ url|safe }}">{{ url_linktext }}</a>
-        <a href="/">Home</a>
-        <a href="/user?author={{ author }}">MyWire</a>
-		<form action="/publish?author={{ author }}" method="post">
-			<div>Title<br><textarea name="title" rows="2" cols="150"></textarea></div>
-            <div>Blog Categories:<br><select name="topic">
+        <div><img src="Images/wordwire_logo.png" width="160"></div>
+        <h2 class="heading">User: {{author}}</h2>
+        <hr>
+        <div>
+        <ul class="nav_bar">
+            <li><a href="{{ url|safe }}">{{ url_linktext }}</a></li>
+            <li><a href="/">Home</a></li>
+            <li><a href="/user?author={{ author }}">MyWire</a></li>
+        </ul>
+            </div>
+        <hr>
+		<form  class="blogpost" action="/publish?author={{ author }}" method="post">
+			<div class="title">Title<br><textarea name="title" rows="2" cols="150"></textarea></div>
+            <div class="title">Blog Categories:<br><select name="topic">
                     {% for blog in blogList %}
                     <option value="{{blog}}">{{ blog }}</option>
                     {% endfor %}
                 </select></div>
-            <div>Tags (Please Enter tags, separated by commas. Eg: Tech, Apple)<br><textarea name="tags" rows="2" cols="90"></textarea></div>
-			<div>Content<br>P.S.: To enter hyperlinks and images just enclose them in <>. Example: &#60 http://theverge.com &#62 or &#60 http://sample.jpg &#62 <textarea name="content" rows="20" cols="150"></textarea></div>
+            <div class="title">Tags (Please Enter tags, separated by commas. Eg: Tech, Apple)<br><textarea name="tags" rows="2" cols="90"></textarea></div>
+			<div class="title">Content<br>P.S.: To enter hyperlinks and images just enclose them in <>. Example: &#60 http://theverge.com &#62 or &#60 http://sample.jpg &#62 <textarea name="content" rows="20" cols="150"></textarea></div>
 			<div><input type="submit" value="Post it!"></div>
 		</form>
 	</body>

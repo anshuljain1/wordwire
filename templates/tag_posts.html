@@ -1,30 +1,33 @@
 <!DOCTYPE html>
 {% autoescape true %}
-<html>
+<html><head>
+        <link rel="stylesheet" type="text/css" href="/style/tag_post.css"/>
+    </head>
 	<body>
-        <div>Welcome to WordWire!</div>
-        <div>
-            <a href="{{ url|safe }}">{{url_linktext}}</a>
-            <br>
-            <a href="/">Home</a>
-        </div>
-        <div>
+        <div><img src="Images/wordwire_logo.png" width="160"></div><div><h1 class="heading">Welcome to WordWire!</h1></div>
+        <hr>
+        <ul class="nav_bar">
+            <li><a href="{{ url|safe }}">{{url_linktext}}</a></li>
+            <li><a href="/">Home</a></li>
+        </ul>
+        <hr>
+        <div class="page-title">
             Here's what people are writing about {{ query_tag }}
         </div>
         {% for post in postList %}
-        <p>
-            <div><font size="2">{{post.blogName}}</font></div>
+        <div class="blogpost">
+            <div class="blogname">{{post.blogName}}</div>
             <div>Tagged in:
                 <form>
             {% for tag in post.tag %}
-                    <input type="submit" value="{{tag}}" formmethod="post" formaction="/tag?tag={{tag}}">
+                    <input class="tags" type="submit" value="{{tag}}" formmethod="post" formaction="/tag?tag={{tag}}">
             {% endfor %}
                 </form>
             </div>
-            <div>{{post.title}}</div>
-            <div><img src="img?img_id={{post.author}}">Created by: <a href="/user?author={{post.author}}">{{post.author}}</a> on {{post.creation}}</div>
-            <div>Last modified on {{post.date}}, at {{post.time}}.</div>
+            <div  class="title">{{post.title}}</div>
+            <div ><img class="creator" src="img?img_id={{post.author}}"><a class="post_author" href="/user?author={{post.author}}">{{post.author}}</a> | {{post.creation}} | Last modified on {{post.date}}, at {{post.time}}.</div>
+            <div class="viewcount">Views: {{post.viewCount}}</div>
             <div>{{post.content|truncate(500)}}<a href="/read_more?author={{post.author}}&uid={{post.uid}}">Read More</a></div>
-        </p>
+        </div>
         {% endfor %}
 {% endautoescape %}

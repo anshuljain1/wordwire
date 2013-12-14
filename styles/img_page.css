@@ -1,0 +1,55 @@
+a:link {text-decoration:none;}    /* unvisited link */
+a:visited {text-decoration:none;} /* visited link */
+a:hover {text-decoration:underline;}   /* mouse over link */
+a:active {text-decoration:underline;}  /* selected link */
+
+ul.nav_bar
+{
+list-style-type:none;
+margin:10px;
+overflow:hidden;
+}
+li
+{
+float:left;
+padding:10px;
+}
+
+body {
+    background-color:rgba(231,231,226,1);
+    background-image:url('/Images/main_gradient.png');
+    background-repeat:repeat-x;
+    position: relative;
+    font-family: Helvetica, Arial, sans-serif;
+    font-size: 14px;
+}
+
+.heading {
+    display:inline-block;
+    margin:10px;
+    background-color:rgba(250,75,42,1);
+    color:#ffffff;
+    border-radius:5px;
+    padding:10px;
+    font-family: 'HelveticaNeue-Light', 'Helvetica Neue Light', 'Helvetica Neue', Helvetica, Arial, 'Lucida         Grande', sans-serif;
+    font-weight:500;
+}
+
+
+
+.title {
+    display:inline-block;
+    background-color:rgba(250,75,42,0.1);
+    border-radius:5px;
+    padding:15px;
+    font-family:adelle,georgia;
+    font-size: 24px;
+    margin: 20px;
+}
+
+.content {
+    font-family: 'HelveticaNeue-Light', 'Helvetica Neue Light', 'Helvetica Neue', Helvetica, Arial, 'Lucida         Grande', sans-serif;
+    font-weight:50;
+    font-size:16px;
+    margin:5px;
+}

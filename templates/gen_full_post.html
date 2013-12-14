@@ -1,35 +1,57 @@
 <!DOCTYPE html>
 {% autoescape true %}
 <html>
+    <head>
+        <link rel="stylesheet" type="text/css" href="/style/readmore.css"/>
+    </head>
 	<body>
-        <div>People are writing about: <br>
+        <div><img src="Images/wordwire_logo.png" width="160"></div>
+        <hr>
+        <ul class="nav_bar">
+            <li><a href="{{ url|safe }}">{{ url_linktext }}</a></li>
+            <li><a href="/">Home</a></li>
+        </ul>
+        <hr>
+        <div class="tag-category">People are writing about: </div>
+        <div>
             <form >
             {% for tag in tagList %}
-                <input type="submit" value="{{tag}}" formmethod="post" formaction="/tag?author={{ author }}&tag={{tag}}">
+                <input class="user-tag" type="submit" value="{{tag}}" formmethod="post" formaction="/tag?author={{ author }}&tag={{tag}}">
             {% endfor %}
             </form>
         </div>
-        <div>
-            <a href="{{ url|safe }}">{{ url_linktext }}</a>
-        </div>
+        <hr>
         {% for post in postList %}
-        <p>
-            <div><font size="2">{{post.blogName}}</font></div>
+        <div class="blogpost">
+            <div class="blogname">{{post.blogName}}</div>
             <div>Tagged in:
                 <form>
             {% for tag in post.tag %}
-                    <input type="submit" value="{{tag}}" formmethod="post" formaction="/tag?author={{ author }}&tag={{tag}}">
+                    <input class="tags" type="submit" value="{{tag}}" formmethod="post" formaction="/tag?author={{author }}&tag={{tag}}">
             {% endfor %}
                 </form>
             </div>
-            <div>{{post.title}}</div>
+            <div class="title">{{post.title}}</div>
+            <hr>
             <div>Viewed {{post.viewCount}} times</div>
-            <div><img src="img?img_id={{post.author}}">Created by: {{post.author}} on {{post.creation}}</div>
-            <div>Last modified on {{post.date}}, at {{post.time}}.</div>
-            <div>{{content}}</div>
-        </p>
-    {% endfor %}
-    <p><a href="/">Home</a></p>
+            <div><img class="creator" src="img?img_id={{post.author}}"><a class="post_author" href="/user?author={{post.author}}">{{post.author}}</a> | {{post.creation}} | Last modified on {{post.date}}, at {{post.time}}.</div>
+            <div class="content">{{content}}</div>
+        <hr>
+            {% if enable_comment %}
+            <div class="comments"><a href="/saveComment?author={{author}}&blogpostID={{post.uid}}">Post a comment</a></div>
+            {% else %}
+            <div class="comments">Login to Post Comments</div>
+            {% endif %}
+            <div class="comments">Comments:</div>
+            {% for comment in comments %}
+                <div class="comment">
+                    <hr>
+                    <div><img class="creator"  src="img?img_id={{comment.author}}"><a href="/saveComment?author={{author}}&blogpostID={{post.uid}}"> {{comment.author}}</a> Wrote:</div>
+                    <div class="comment-content">{{comment.comment}}</div>
+                </div>
+            {% endfor %}
+        </div>
+        {% endfor %}
     </body>
 </html>
 {% endautoescape %}

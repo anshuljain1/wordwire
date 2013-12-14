@@ -1,21 +1,26 @@
 <!DOCTYPE html>
 {% autoescape true %}
-<html>
+<html><head>
+        <link rel="stylesheet" type="text/css" href="/style/userpage.css"/>
+    </head>
 	<body>
-        <div>Welcome to WordWire, {{author}}!</div>
-        <br>
-        <p>
+        <div><img src="Images/wordwire_logo.png" width="160"></div>
+        <h1 class="heading">Welcome to WordWire, {{author}}!</h1>
+        <hr>
+        
+        <div>
             Before you get started, be sure to make a blog category!
-        </p>
+        </div>
         
         <div>Here are some awesome things you can do to get started</div>
-        <div>
-            <a href="/new_blog?author={{author}}">Add a new blog</a>
-            <a href="/new_post?author={{author}}">Add a new post</a>
-            <a href="/add_avatar">Update Avatar</a>
-        </div>
-    <p><a href="{{ url|safe }}">{{ url_linktext }}</a></p>
-    <p><a href="/">Home</a></p>
+        <ul class="nav_bar">
+            <li><a href="/new_blog?author={{author}}">Add a new blog</a></li>
+            <li><a href="/new_post?author={{author}}">Add a new post</a></li>
+            <li><a href="/add_avatar">Update Avatar</a></li>
+            <li><a href="{{ url|safe }}">{{ url_linktext }}</a></li>
+            <li><a href="/">Home</a></li>
+        </ul>
+        <hr>
     </body>
 </html>
 {% endautoescape %}

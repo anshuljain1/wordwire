@@ -1,45 +1,64 @@
 <!DOCTYPE html>
 {% autoescape true %}
 <html>
+    <head>
+        <link rel="stylesheet" type="text/css" href="/style/readmore.css"/>
+    </head>
 	<body>
-        <div>{{author}} Logged In</div>
-        <div>Blog Categories:<br>
+        <div><img src="Images/wordwire_logo.png" width="160"></div>
+        <h2 class="heading">User: {{author}}</h2>
+        <hr>
+        <ul class="nav_bar">
+            <li><a href="/new_blog?author={{author}}">Add a new blog</a></li>
+            <li><a href="/new_post?author={{author}}">Add a new post</a></li>
+            <li><a href="{{ url|safe }}">{{ url_linktext }}</a></li>
+            <li><a href="/">Home</a></li>
+            <li><a href="/user?author={{author}}">MyWire</a></li>
+        </ul>
+        <hr>
+        <div class="blog-category">Blog Categories:</div>
+        <div>
             <form>
             {% for blog in blogList %}
-                <input type="submit" value="{{blog}}" formmethod="post" formaction="/blog?author={{ author }}&blog={{blog}}">
+                <input class="blog-tag" type="submit" value="{{blog}}" formmethod="post" formaction="/blog?author={{ author }}&blog={{blog}}">
             {% endfor %}
             </form>
         </div>
-        <div>Your Tags <br>
+        <div class="tag-category">Your Tags </div>
+        <div>
             <form >
             {% for tag in tagList %}
-                <input type="submit" value="{{tag}}" formmethod="post" formaction="/tag?author={{ author }}&tag={{tag}}">
+                <input class="user-tag" type="submit" value="{{tag}}" formmethod="post" formaction="/tag?author={{ author }}&tag={{tag}}">
             {% endfor %}
             </form>
         </div>
-        <div>
-            <a href="/new_blog?author={{author}}">Add a new blog</a>
-            <a href="/new_post?author={{author}}">Add a new post</a>
-        </div>
+        <hr>
         {% for post in postList %}
-        <p>
-            <div><font size="2">{{post.blogName}}</font></div>
+        <div class="blogpost">
+            <div class="blogname">{{post.blogName}}</div>
             <div>Tagged in:
                 <form>
             {% for tag in post.tag %}
-                    <input type="submit" value="{{tag}}" formmethod="post" formaction="/tag?author={{ author }}&tag={{tag}}">
+                    <input class="tags" type="submit" value="{{tag}}" formmethod="post" formaction="/tag?author={{ author }}&tag={{tag}}">
             {% endfor %}
                 </form>
             </div>
-            <div>{{post.title}}</div>
+            <div class="title">{{post.title}}</div>
+            <hr>
             <div>Viewed {{post.viewCount}} times</div>
-            <div><img src="img?img_id={{post.author}}">Created by: {{post.author}} on {{post.creation}}</div>
-            <div>{{content}}</div>
-        </p>
+            <div><img  class="creator" src="img?img_id={{post.author}}"><a class="post_author" href="/user?author={{post.author}}">{{post.author}}</a> | {{post.creation}} | Last modified on {{post.date}}, at {{post.time}}.</div>
+            <div class="content">{{content}}</div>
+            <hr>
+        <div class="comments">Comments:</div>
+        {% for comment in comments %}
+            <hr>
+            <div class="comment">
+                <div class="creator"><img src="img?img_id={{comment.author}}"><a href="/saveComment?author={{author}}&blogpostID={{post.uid}}"> {{comment.author}}</a> Wrote:</div>
+            <div class="comment-content">{{comment.comment}}</div>
+            </div>
         {% endfor %}
-    <p><a href="{{ url|safe }}">{{ url_linktext }}</a></p>
-    <p><a href="/">Home</a></p>
-    <p><a href="/user?author={{author}}">MyWire</a></p>
+        </div>
+        {% endfor %}
     </body>
 </html>
 {% endautoescape %}

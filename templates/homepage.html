@@ -1,45 +1,51 @@
 <!DOCTYPE html>
 {% autoescape true %}
 <html>
+    <head>
+        <link rel="stylesheet" type="text/css" href="/style/mainpage.css"/>
+    </head>
 	<body>
-        <div><img src="Images/wordwire_logo.png" width="160"></div><div>Welcome to WordWire!</div>
-        <div>People are writing about: <br>
+        <div><img src="Images/wordwire_logo.png" width="160"></div><div><h1 class="heading">Welcome to WordWire!</h1></div>
+        <hr>
+        <ul class="nav_bar">
+            <li><a href="{{ url|safe }}">{{url_linktext}}</a></li>
+        {% if not guest %}
+            <li><a href="{{ mypage }}">MyWire</a></li>
+        {% endif %}
+        <li><a href="/">Home</a></li>
+        </ul>
+        <hr>
+        <div class="tag-category">People are writing about: </div>
+        <div>
             <form >
             {% for tag in tagList %}
-                <input type="submit" value="{{tag}}" formmethod="post" formaction="/tag?tag={{tag}}">
+                <input class="user-tag" type="submit" value="{{tag}}" formmethod="post" formaction="/tag?tag={{tag}}">
             {% endfor %}
             </form>
-        </div>
-        <div>
-            <a href="{{ url|safe }}">{{url_linktext}}</a>
-        {% if not guest %}
-            <a href="{{ mypage }}">MyWire</a>
-        {% endif %}
-        <a href="/">Home</a>
         </div>
         <div>
             <br>
             <p>
-            <form action="/search" method="post" >
-                <textarea name="query" rows="1" cols="10"></textarea><input type="submit" value="Search">
+            <form class="search" action="/search" method="post" >
+                <input type="text" name="query"><input type="submit" value="Search">
             </form>
             </p>
         </div>
         {% for post in postList %}
-        <p>
-            <div><font size="2">{{post.blogName}}</font></div>
+        <div class="blogpost">
+            <hr>
+            <div class="blogname">{{post.blogName}}</div>
             <div>Tagged in:
                 <form>
             {% for tag in post.tag %}
-                    <input type="submit" value="{{tag}}" formmethod="post" formaction="/tag?tag={{tag}}">
+                    <input class="tags" type="submit" value="{{tag}}" formmethod="post" formaction="/tag?tag={{tag}}">
             {% endfor %}
                 </form>
             </div>
-            <div>{{post.title}}</div>
-            <div>Views: {{post.viewCount}}</div>
-            <div><img src="img?img_id={{post.author}}">Created by: <a href="/user?author={{post.author}}">{{post.author}}</a> on {{post.creation}}</div>
-            <div>Last modified on {{post.date}}, at {{post.time}}.</div>
+            <div class="title">{{post.title}}</div>
+            <div class="viewcount">Views: {{post.viewCount}}</div>
+            <div ><img class="creator" src="img?img_id={{post.author}}"><a class="post_author" href="/user?author={{post.author}}">{{post.author}}</a> | {{post.creation}} | Last modified on {{post.date}}, at {{post.time}}.</div>
             <div>{{post.content|truncate(500)}}<a href="/read_more?author={{post.author}}&uid={{post.uid}}">Read More</a></div>
-        </p>
+        </div>
         {% endfor %}
 {% endautoescape %}

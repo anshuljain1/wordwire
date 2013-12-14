@@ -12,6 +12,7 @@ import logging
 import urllib
 import uuid
 import re
+import time
 
 DEFAULT_TITLE_NAME = 'My Blog Post'
 
@@ -52,6 +53,14 @@ class BlogUser(ndb.Model):
     tagList = ndb.StringProperty(repeated=True)
     followedUsers = ndb.StringProperty(repeated=True)
 
+class Comments(ndb.Model):
+    """Models a comment written by user"""
+    author = ndb.StringProperty(indexed=True)
+    blogpostID = ndb.StringProperty(indexed=True)
+    comment = ndb.StringProperty()
+    creation = ndb.DateTimeProperty(auto_now_add=True)
+        
+
 class Main(webapp2.RequestHandler):
     def get(self):
         user = users.get_current_user()
@@ -60,9 +69,16 @@ class Main(webapp2.RequestHandler):
         postList, next_curs, more = blogpost_query.fetch_page(10, start_cursor=curs)
 
         for i in xrange(len(postList)):
-            postList[i].content = jinja2.Markup(postList[i].content)            
-         
+            postList[i].content = jinja2.Markup(postList[i].content)
+        
         if user:
+            user_query = BlogUser.query(BlogUser.author == user.nickname())
+            userDB = user_query.fetch()
+        
+            if not userDB:
+                new_user = BlogUser(key = ndb.Key('BlogUser',user.nickname()),author = user.nickname())
+                new_user.put()
+
             url = users.create_logout_url('/')
             url_linktext = 'Logout'
             mypage = '/user?author='+user.nickname()
@@ -155,19 +171,19 @@ class UserPage(webapp2.RequestHandler):
             else:
                 edit = ''
 
-            curs = Cursor(urlsafe=self.request.get('cursor'))
             user_query = BlogUser.query(BlogUser.author == req_user)
             userDB = user_query.fetch()
-            post_query = BlogPost.query(
-            ancestor=user_key(req_user)).order(-BlogPost.creation)
-            posts, next_curs, more = post_query.fetch_page(10, start_cursor=curs)
             user = users.get_current_user()
-
-            
-            for i in xrange(len(posts)):
-                posts[i].content = jinja2.Markup(posts[i].content)
             
             if userDB:
+                curs = Cursor(urlsafe=self.request.get('cursor'))
+                post_query = BlogPost.query(
+                ancestor=user_key(req_user)).order(-BlogPost.creation)
+                posts, next_curs, more = post_query.fetch_page(10, start_cursor=curs)
+                
+                for i in xrange(len(posts)):
+                    posts[i].content = jinja2.Markup(posts[i].content)
+
                 parent = user_key(req_user).get()
                 tagList = parent.tagList
                 blogList = parent.blogList
@@ -247,6 +263,7 @@ class CreateBlog(webapp2.RequestHandler):
         blogUser.blogList = list(set(blogUser.blogList))
         blogUser.put()
         query_params = {'author': authorName}
+        time.sleep(1)
         self.redirect('/user?'+ urllib.urlencode(query_params))
 
 class PostPublish(webapp2.RequestHandler):
@@ -285,6 +302,7 @@ class PostPublish(webapp2.RequestHandler):
         owner.tagList = list(set(owner.tagList))
         owner.put()
         query_params = {'author': user.nickname()}
+        time.sleep(1)
         self.redirect('/user?'+ urllib.urlencode(query_params))
 
 class EditPost(webapp2.RequestHandler):
@@ -334,12 +352,16 @@ class EditPost(webapp2.RequestHandler):
         new_post.title = self.request.get('title', DEFAULT_TITLE_NAME)
         new_post.content = self.request.get('content')
         new_post.uid = str(self.request.get('uid'))
+        new_post.upvote = 0
+        new_post.viewCount = 0
 
         link= re.compile(r'<\s*(https?://w*\.(\S+)\.co\S+)\s*>')
         img = re.compile(r'<\s*(https?://.+/(\S+)\.(jpg|jpeg|gif|png))\s*>')
+        locimg = re.compile(r'<\s*(https?://\S+/usr_img\?img_id(\S+))\s*>')
         
-        new_post.content = img.sub(r'<img src="\1" alt="\2">',new_post.content)        
-        new_post.content = link.sub(r'<a href="\1">\2</a>',new_post.content)        
+        new_post.content = img.sub(r'<img src="\1" alt="\2">',new_post.content)
+        new_post.content = locimg.sub(r'<img src="\1" alt="\2">',new_post.content)     
+        new_post.content = link.sub(r'<a href="\1">\2</a>',new_post.content)
         
         blogpost_query = BlogPost.query(BlogPost.uid == new_post.uid)
         stalePost = blogpost_query.fetch()[0]
@@ -349,6 +371,7 @@ class EditPost(webapp2.RequestHandler):
         for i in xrange(len(tag)):
             tag[i] = tag[i].lstrip(' ')
             tag[i]=tag[i].rstrip(' ')
+        
         new_post.tag = tag
         new_post.put()
         owner=new_post.key.parent().get()
@@ -356,7 +379,7 @@ class EditPost(webapp2.RequestHandler):
         owner.tagList = list(set(owner.tagList))
         owner.put()
         query_params = {'author': user.nickname()}
-        self.redirect('/?'+ urllib.urlencode(query_params))
+        self.redirect('/user?'+ urllib.urlencode(query_params))
 
 class TaggedPost(webapp2.RequestHandler):
     def post(self):
@@ -482,6 +505,9 @@ class ReadMore(webapp2.RequestHandler):
         post_query = BlogPost.query(BlogPost.uid == uid)
         post = post_query.fetch()
         
+        comment_query = Comments.query(Comments.blogpostID == uid).order(-Comments.creation)
+        comments = comment_query.fetch()
+        
         if user and req_user == user.nickname():
             if user.nickname() != post[0].author :
                 post[0].viewCount = post[0].viewCount + 1
@@ -500,13 +526,16 @@ class ReadMore(webapp2.RequestHandler):
             'postList': post,
             'url': url,
             'url_linktext': url_linktext,
+            'comments': comments,
             }
             template = JINJA_ENVIRONMENT.get_template('templates/auth_full_post.html')
             self.response.write(template.render(template_values))
         else:
+            enable_comment = ''
             if user:
                url = users.create_logout_url('/')
                url_linktext = 'Logout'
+               enable_comment = 'true'
             else:
                url = users.create_login_url('/')
                url_linktext = 'Login'
@@ -527,10 +556,50 @@ class ReadMore(webapp2.RequestHandler):
             'postList': post,
             'url': url,
             'url_linktext': url_linktext,
+            'comments': comments,
+            'enable_comment': enable_comment,
             }
 
             template = JINJA_ENVIRONMENT.get_template('templates/gen_full_post.html')
             self.response.write(template.render(template_values))
+
+class SaveComment(webapp2.RequestHandler):
+    def post(self):
+        user = users.get_current_user()
+        if user:
+            comment = self.request.get('comment')
+            author  = user.nickname()
+            blogpostID = self.request.get('blogpostID')
+            new_comment = Comments(author = author,
+                                   comment = comment,
+                                   blogpostID = blogpostID)
+            new_comment.put()
+            reDirectURL = '/read_more?author='+author+'&'+'uid='+blogpostID
+            time.sleep(1)
+            self.redirect(reDirectURL)
+        else:
+            self.redirect(users.create_login_url('/'))
+            
+    def get(self):
+        user = users.get_current_user()
+        if user:
+            blogpostID = self.request.get('blogpostID')
+            author  = user.nickname()
+            url = users.create_logout_url('/')
+            url_linktext = 'Logout'
+            
+            template_values = {
+                'author': author,
+                'blogpostID': blogpostID,
+                'url':url,
+                'url_linktext': url_linktext,
+            }
+
+            template = JINJA_ENVIRONMENT.get_template('templates/add_comment.html')
+            self.response.write(template.render(template_values))
+        else:
+            self.redirect(users.create_login_url('/'))
+
 
 class GetRSS(webapp2.RequestHandler):
     def get(self):
@@ -775,4 +844,5 @@ application = webapp2.WSGIApplication([
     ('/followUsr', FollowUser),
     ('/unFollowUsr', UnFollowUser),
     ('/followedPosts', FollowedPosts),
+    ('/saveComment', SaveComment),
 ], debug=True)

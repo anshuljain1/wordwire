@@ -1,69 +1,77 @@
 <!DOCTYPE html>
 {% autoescape true %}
 <html>
+    <head>
+        <link rel="stylesheet" type="text/css" href="/style/userpage.css"/>
+    </head>
 	<body>
+        <div><img src="Images/wordwire_logo.png" width="160"></div>
         {%if edit%}
-        <div>Welcome, {{author}}!</div>
+        <h1 class="heading">Welcome, {{author}}!</h1>
         {% endif %}
-        <div>Blog Categories:<br>
+        <hr>
+        <ul class="nav_bar">
+            {%if edit%}
+            <li><a href="/new_blog?author={{author}}">Add a new blog</a></li>
+            <li><a href="/new_post?author={{author}}">Add a new post</a></li>
+            <li><a href="/add_avatar?={{author}}">Update Avatar</a></li>
+            <li><a href="/add_img?author={{author}}">Add Image</a></li>
+            <li><a href="/view_images?author={{author}}">My Images</a></li>
+            <li><a href="/followedPosts?author={{author}}">Followed Post</a></li>
+            <li><a href="/user?author={{user}}">MyWire</a></li>
+            {% endif %}
+            <li><a href="{{ url|safe }}">{{ url_linktext }}</a></li>
+            {%if follow_usr_url%}
+                <li><a href="{{follow_usr_url}}">{{follow_usr_url_linktext}}</a></li>
+            {% endif %}
+            <li><a href="/">Home</a></li>
+        
+        {% if rss_blog %}
+            <li><a href="/get_rss?author={{author}}&blog={{rss_blog}}">Get RSS</a></li>
+        {% endif %}
+        </ul>
+        
+        
+        <hr>
+        <div class="blog-category">Blog Categories:</div>
+        <div class="blog-tag">
             <form>
             {% for blog in blogList %}
                 <input type="submit" value="{{blog}}" formmethod="post" formaction="/blog?author={{ author }}&blog={{blog}}">
             {% endfor %}
             </form>
         </div>
-        <div>Your Tags <br>
+        <div class="tag-category">User Tags: </div>
+        <div>
             <form >
             {% for tag in tagList %}
-                <input type="submit" value="{{tag}}" formmethod="post" formaction="/tag?author={{ author }}&tag={{tag}}">
+                <input class="user-tag" type="submit" value="{{tag}}" formmethod="post" formaction="/tag?author={{ author }}&tag={{tag}}">
             {% endfor %}
             </form>
         </div>
         <div>
-            {%if edit%}
-            <a href="/new_blog?author={{author}}">Add a new blog</a>
-            <a href="/new_post?author={{author}}">Add a new post</a>
-            <a href="/add_avatar?={{author}}">Update Avatar</a>
-            <a href="/add_img?author={{author}}">Add Image</a>
-            <a href="/view_images?author={{author}}">My Images</a>
-            <a href="/followedPosts?author={{author}}">Followed Post</a>
-            <a href="/user?author={{user}}">MyWire</a>
-            {% endif %}
-            {%if follow_usr_url%}
-                <a href="{{follow_usr_url}}">{{follow_usr_url_linktext}}</a>
-            {% endif %}
-            <a href="/">Home</a>
-        </div>
-        {% if rss_blog %}
-            <a href="/get_rss?author={{author}}&blog={{rss_blog}}">Get RSS</a>
-        {% endif %}
-        <div>
-            <br>
-            <p>
-            <form action="/search" method="post" >
-                <textarea name="query" rows="1" cols="10"></textarea><input type="submit" value="Search">
+            <form class="search" action="/search" method="post" >
+                <input type="text" name="query" ><input type="submit" value="Search">
             </form>
-            </p>
         </div>
+        <hr>
         {% for post in postList %}
-        <p>
-            <div><font size="2">{{post.blogName}}</font></div>
+        <div class="blogpost">
+            <div class="blogname">{{post.blogName}}</div>
             <div>Tagged in:
                 <form>
             {% for tag in post.tag %}
-                <input type="submit" value="{{tag}}" formmethod="post" formaction="/tag?author={{ author }}&tag={{tag}}">
+                <input class="tags" type="submit" value="{{tag}}" formmethod="post" formaction="/tag?author={{ author }}&tag={{tag}}">
             {% endfor %}
                 </form>
             </div>
+            <div class="title">{{post.title}}
+            </div>{%if edit%}<a href="/post_edit?uid={{post.uid}}">edit</a>{% endif %}
+            <div class="viewcount">Views: {{post.viewCount}}</div>
             <div>
-                <img src="img?img_id={{post.author}}">
-                {{post.title}} {%if edit%}<a href="/post_edit?uid={{post.uid}}">edit</a>{% endif %}
+                <img class="creator" src="img?img_id={{post.author}}"><a class="post_author" href="/user?author={{post.author}}">{{post.author}}</a> | {{post.creation}} | Last modified on {{post.date}}, at {{post.time}}.
             </div>
-            <div>Views: {{post.viewCount}}</div>
-            <div>Created by: {{post.author}} on {{post.creation}}</div>
-            <div>Last modified on {{post.date}}, at {{post.time}}.</div>
             <div>{{post.content|truncate(500)}} <a href="/read_more?author={{post.author}}&uid={{post.uid}}">Read More</a></div>
-        </p>
+        </div>
         {% endfor %}
-    <p><a href="{{ url|safe }}">{{ url_linktext }}</a></p>
 {% endautoescape %}

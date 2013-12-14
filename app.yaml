@@ -7,6 +7,10 @@ threadsafe: true
 handlers:
 - url: /Images
   static_dir: Images
+
+- url: /style
+  static_dir: styles
+
 - url: /.*
   script: blog.application
 

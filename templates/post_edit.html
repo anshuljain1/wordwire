@@ -1,17 +1,23 @@
 <!DOCTYPE html>
 {% autoescape true %}
-<html>
+<html><head>
+        <link rel="stylesheet" type="text/css" href="/style/new_post.css"/>
+    </head>
 	<body>
-		<form action="/post_edit?author={{author}}&uid={{uid}}" method="post">
-			<div>Title<br><textarea name="title" rows="2" cols="150">{{title}}</textarea></div>
-            <div>Created on <label name="creation" >{{creation}}</label></div>
-            <div>Blog Categories:<br><select name="topic">
+        <div><img src="Images/wordwire_logo.png" width="160"></div>
+        <h2 class="heading">User: {{author}}</h2>
+        <hr>
+		<form class="blogpost" action="/post_edit?author={{author}}&uid={{uid}}" method="post">
+            <div class="title">Created on <label name="creation" >{{creation}}</label></div>
+            <hr>
+			<div class="title">Title<br><textarea name="title" rows="2" cols="150">{{title}}</textarea></div>
+            <div class="title">Blog Categories:<br><select name="topic">
                     {% for blog in blogList %}
                         <option value="{{blog}}" >{{ blog }}</option>
                     {% endfor %}
                 </select></div>
-            <div>Tags (Please Enter tags, separated by commas. Eg: Tech, Apple)<br><textarea name="tags" rows="2" cols="90">{{tags}}</textarea></div>
-			<div>Content<br><textarea name="content" rows="20" cols="150">{{content}}</textarea></div>
+            <div class="title">Tags (Please Enter tags, separated by commas. Eg: Tech, Apple)<br><textarea name="tags" rows="2" cols="90">{{tags}}</textarea></div>
+			<div class="title">Content<br><textarea name="content" rows="20" cols="150">{{content}}</textarea></div>
 			<div><input type="submit" value="Update!"></div>
 		</form>
 	</body>

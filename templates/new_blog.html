@@ -1,9 +1,14 @@
 <!DOCTYPE html>
 {% autoescape true %}
-<html>
+<html><head>
+        <link rel="stylesheet" type="text/css" href="/style/add_img.css"/>
+    </head>
 	<body>
-        <div>Please Entery the new blog category to be created.</div>
-        <form action="/new_blog?author={{ author }}" method="post">
+        <div><img src="Images/wordwire_logo.png" width="160"></div>
+        <h2 class="heading">Hey {{author}}</h2>
+        <hr>
+        <div class="update-here">Please enter the new blog category to be created.</div>
+        <form class="content" action="/new_blog?author={{ author }}" method="post">
             <div>Blog Name<br><textarea name="blog_name" rows="2" cols="20"></textarea></div>
             <div><input type="submit" value="Create it!"></div>
         </form>

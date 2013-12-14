@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+{% autoescape true %}
+<html><head>
+        <link rel="stylesheet" type="text/css" href="/style/new_post.css"/>
+    </head>
+	<body>
+        <div><img src="Images/wordwire_logo.png" width="160"></div>
+        <h2 class="heading">User: {{author}}</h2>
+        <hr>
+        <ul class="nav_bar">
+            <li><a href="{{ url|safe }}">{{ url_linktext }}</a></li>
+            <li><a href="/">Home</a></li>
+            <li><a href="/user?author={{ author }}">MyWire</a></li>
+        </ul>
+        <hr>
+		<form class="blogpost" action="/saveComment?author={{ author }}&blogpostID={{blogpostID}}" method="post">
+            <div class="title">Enter your comment here:</div>
+			<div class="title">Content<br><textarea name="comment" rows="20" cols="150"></textarea></div>
+            <div class="title">P.S :It may take some time to save comment to database</div>
+			<div><input type="submit" value="Post it!"></div>
+		</form>
+	</body>
+</html>
+{% endautoescape %}

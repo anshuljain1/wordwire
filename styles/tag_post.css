@@ -1,0 +1,95 @@
+a:link {text-decoration:none;}    /* unvisited link */
+a:visited {text-decoration:none;} /* visited link */
+a:hover {text-decoration:underline;}   /* mouse over link */
+a:active {text-decoration:underline;}  /* selected link */
+
+ul.nav_bar
+{
+list-style-type:none;
+margin:10px;
+overflow:hidden;
+}
+li
+{
+float:left;
+padding:10px;
+}
+
+body {
+    background-color:rgba(231,231,226,1);
+    background-image:url('/Images/main_gradient.png');
+    background-repeat:repeat-x;
+    position: relative;
+    font-family: Helvetica, Arial, sans-serif;
+    font-size: 14px;
+}
+
+.heading {
+    display:inline-block;
+    margin:10px;
+    background-color:rgba(250,75,42,1);
+    color:#ffffff;
+    border-radius:5px;
+    padding:10px;
+    font-family: 'HelveticaNeue-Light', 'Helvetica Neue Light', 'Helvetica Neue', Helvetica, Arial, 'Lucida         Grande', sans-serif;
+    font-weight:500;
+}
+
+.page-title {
+    font-family: 'HelveticaNeue-Light', 'Helvetica Neue Light', 'Helvetica Neue', Helvetica, Arial, 'Lucida         Grande', sans-serif;
+    font-weight:300;
+    margin:30px;
+}
+
+.search {
+    position:relative;
+    padding: 5px 0 0 0;
+    vertical-align: top;
+}
+
+.title {
+    font-family:adelle,georgia;
+    font-size: 24px;
+    margin-top: 10px;
+    margin-bottom: 10px;
+    margin-right: 10px;
+}
+
+.blogpost {
+    float: left;
+    width:900px;
+    padding:10px;
+    margin:10px;
+    text-align:justify;
+    text-justify:inter-word;
+}
+
+.post_author {
+    margin:10px;
+    font-family:"Lucida Sans Unicode", "Lucida Grande", sans-serif;
+    font-size: 12px;
+    font-weight:bold;
+}
+
+.creator {
+    margin:10px;
+    vertical-align:middle;
+}
+
+.content {
+    margin-left:20px;
+}
+
+.comment-content {
+    margin-left:64px;
+}
+
+.blogname {
+    margin:10px;
+    font-family:"Trebuchet MS", "Trebuchet MS", sans-serif;
+    font-size:20px;
+}
+
+.tags {
+    margin:5px;
+}
