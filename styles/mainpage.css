@@ -1,4 +1,4 @@
-a:link {text-decoration:none;}    /* unvisited link */
+a:link {text-decoration:none;}    /* A sample unvisited link */
 a:visited {text-decoration:none;} /* visited link */
 a:hover {
     background-color:rgba(250,75,42,1);
