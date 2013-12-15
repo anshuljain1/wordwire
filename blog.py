@@ -95,6 +95,7 @@ class Main(webapp2.RequestHandler):
             tagList = tagList+tags[i].tagList
         tagList = list(set(tagList))
         tagList = map(str, tagList)
+        tagList = filter(None, tagList)
         template_values = {
         'tagList': tagList,
         'postList': postList,
@@ -290,11 +291,11 @@ class PostPublish(webapp2.RequestHandler):
         tag = self.request.get('tags')
         tag = tag.lower()
         tag = tag.split(',')
-        tag = filter(None, tag)
         
         for i in xrange(len(tag)):
             tag[i] = tag[i].lstrip(' ')
             tag[i]=tag[i].rstrip(' ')
+        tag = filter(None, tag)
         new_post.tag = tag
         new_post.put()
         owner=new_post.key.parent().get()
@@ -368,6 +369,7 @@ class EditPost(webapp2.RequestHandler):
         new_post.creation = stalePost.creation
         tag = self.request.get('tags')
         tag = tag.split(',')
+        tag = filter(None, tag)
         for i in xrange(len(tag)):
             tag[i] = tag[i].lstrip(' ')
             tag[i]=tag[i].rstrip(' ')
@@ -484,6 +486,7 @@ class BlogTopic(webapp2.RequestHandler):
             'url_linktext': url_linktext,
             'rss_blog':blog,
             'edit':edit,
+            'blogname':blog,
             }
 
             template = JINJA_ENVIRONMENT.get_template('templates/user_page.html')

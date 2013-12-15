@@ -1,11 +1,23 @@
 a:link {text-decoration:none;}    /* unvisited link */
 a:visited {text-decoration:none;} /* visited link */
-a:hover {text-decoration:underline;}   /* mouse over link */
+a:hover {
+    background-color:rgba(250,75,42,1);
+    color:#ffffff;
+    border-radius:5px;
+    padding:5px;
+    text-decoration:none;}   /* mouse over link */
 a:active {text-decoration:underline;}  /* selected link */
 
 a.permalink {
     color:rgba(154,154,154,1);
 }
+
+a.permalink:hover {
+    background-color:rgba(250,75,42,0.5);
+    color:#ffffff;
+    border-radius:5px;
+    padding:5px;
+    text-decoration:none;}   /* mouse over link */
 
 ul.nav_bar
 {

@@ -9,6 +9,9 @@
         {%if edit%}
         <h1 class="heading">Welcome, {{author}}!</h1>
         {% endif %}
+        {%if blogname %}
+            <h1 class="heading">{{blogname}}</h1>
+        {% endif %}
         <hr>
         <ul class="nav_bar">
             {%if edit%}
