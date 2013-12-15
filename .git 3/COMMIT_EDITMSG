@@ -1,0 +1,24 @@
+Squashed some bugs.
+# Please enter the commit message for your changes. Lines starting
+# with '#' will be ignored, and an empty message aborts the commit.
+# On branch master
+# Changes to be committed:
+#   (use "git reset HEAD <file>..." to unstage)
+#
+#	modified:   blog.py
+#	modified:   blog.pyc
+#	modified:   styles/add_img.css
+#	modified:   styles/followed-post.css
+#	modified:   styles/img_page.css
+#	modified:   styles/mainpage.css
+#	modified:   styles/new_blog.css
+#	modified:   styles/new_post.css
+#	modified:   styles/post_comment.css
+#	modified:   styles/post_edit.css
+#	modified:   styles/readmore.css
+#	modified:   styles/tag_post.css
+#	modified:   styles/update-avatar.css
+#	modified:   styles/userpage.css
+#	modified:   templates/add_img.html
+#	modified:   templates/user_page.html
+#

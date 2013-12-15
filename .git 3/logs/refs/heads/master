@@ -1,0 +1,19 @@
+0000000000000000000000000000000000000000 0a2fc87eeda3e9826f6df551a4d885951739d572 wordwire <akj267@nyu.edu> 1385941223 -0500	commit (initial): first commit
+0a2fc87eeda3e9826f6df551a4d885951739d572 59396d7203e2aabaa3dc632818c34d0f728ecc06 wordwire <akj267@nyu.edu> 1385942290 -0500	commit: App configuration File made
+59396d7203e2aabaa3dc632818c34d0f728ecc06 7bd8c2f41ace004102d9f6995c141bcc736c299a wordwire <akj267@nyu.edu> 1385956262 -0500	commit: Added hello world py and template folder
+7bd8c2f41ace004102d9f6995c141bcc736c299a b2fa7ef74bb10ee3d3790185e0f821eb8d0fdc82 wordwire <akj267@nyu.edu> 1385960888 -0500	commit: Added template functionality for basic new blog entry.
+b2fa7ef74bb10ee3d3790185e0f821eb8d0fdc82 e21bbc9ca9b74706eef7710b2629ba30376f8438 wordwire <akj267@nyu.edu> 1386024951 -0500	commit: User page for adding new blog post and adding tags for user
+e21bbc9ca9b74706eef7710b2629ba30376f8438 f4137af35ce8ceae8ab13899a60d6150f258aaa3 wordwire <akj267@nyu.edu> 1386053088 -0500	commit: Mainpage functionaility, blog functionality for user, tag functionality for user with ability to view entire blog added.
+f4137af35ce8ceae8ab13899a60d6150f258aaa3 4e5cb3128ced32887647887fb06023b679e5b5a4 wordwire <akj267@nyu.edu> 1386063081 -0500	commit: Added functionality to modify posts
+4e5cb3128ced32887647887fb06023b679e5b5a4 1ea07911a78377b069acf983b913c211943e9cbd wordwire <akj267@nyu.edu> 1386112041 -0500	commit: Added RSS feed functionality for a blog created by user.
+1ea07911a78377b069acf983b913c211943e9cbd 1957eb2fa5567dd42aa8e191a1e80a70935347f8 wordwire <akj267@nyu.edu> 1386116589 -0500	commit: Edited some html text on new_entry.
+1957eb2fa5567dd42aa8e191a1e80a70935347f8 c9c767e14babad2b81c071200b1dc45f21d88248 wordwire <akj267@nyu.edu> 1386135797 -0500	commit: Auto html http and inline image functionality added.
+c9c767e14babad2b81c071200b1dc45f21d88248 7663b6bc135c83ec8a4773bcf2543d47be1a03cf wordwire <akj267@nyu.edu> 1386143051 -0500	commit: Cursor functionality has been added to support multiple page views when posts are greater than 10.
+7663b6bc135c83ec8a4773bcf2543d47be1a03cf a95dece094ee35d5524818d39db85d192c788263 wordwire <akj267@nyu.edu> 1386322222 -0500	commit: Avatar feature for each user added. Avatar now gets displayed beside every post for every user.
+a95dece094ee35d5524818d39db85d192c788263 d3e356c1bcbb8da910327f1c604cbc92eadaeac5 wordwire <akj267@nyu.edu> 1386706427 -0500	commit: Added Blog Logo and ability for logged out browsing to user pages.
+d3e356c1bcbb8da910327f1c604cbc92eadaeac5 140aec3ffe9d3a575d2746aced3ac8b6a572ad7b wordwire <akj267@nyu.edu> 1386742369 -0500	commit: Image upload service added with permalink. Images can now be embeded into posts by the image owner.
+140aec3ffe9d3a575d2746aced3ac8b6a572ad7b 5d6ba60c1a4ce8167825234e8b58be77186df57d wordwire <akj267@nyu.edu> 1386752136 -0500	commit: Logged in users can now follow/unfollow other users. They can also see their top 10 recent posts.
+5d6ba60c1a4ce8167825234e8b58be77186df57d 94bb50c022bc90e7483b09ef6d1fb0bb480a8d73 wordwire <akj267@nyu.edu> 1387003258 -0500	commit: Adde CSS to the entire website.
+94bb50c022bc90e7483b09ef6d1fb0bb480a8d73 96885aef4a9b798e76f3704270d93c12c0ac1c5c wordwire <akj267@nyu.edu> 1387003489 -0500	commit: Changed application name for GAE.
+96885aef4a9b798e76f3704270d93c12c0ac1c5c 202713f2d107ed6eb9ea9b045c79d47796217303 wordwire <akj267@nyu.edu> 1387068389 -0500	commit: Modified some html to also add Permalink along with read more link.
+202713f2d107ed6eb9ea9b045c79d47796217303 57e60ae463c7dbe9013897d4564a140b47b891a5 wordwire <akj267@nyu.edu> 1387096894 -0500	commit: Squashed some bugs.
