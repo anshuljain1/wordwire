@@ -484,7 +484,6 @@ class BlogTopic(webapp2.RequestHandler):
             'postList': posts,
             'url': url,
             'url_linktext': url_linktext,
-            'rss_blog':blog,
             'edit':edit,
             'blogname':blog,
             }
@@ -599,32 +598,6 @@ class SaveComment(webapp2.RequestHandler):
             }
 
             template = JINJA_ENVIRONMENT.get_template('templates/add_comment.html')
-            self.response.write(template.render(template_values))
-        else:
-            self.redirect(users.create_login_url('/'))
-
-
-class GetRSS(webapp2.RequestHandler):
-    def get(self):
-        req_user = str(urllib.url2pathname(self.request.get('author')))
-        blog = self.request.get('blog')
-        if os.environ.get('HTTP_HOST'): 
-            host = os.environ['HTTP_HOST'] 
-        else: 
-            host = os.environ['SERVER_NAME']
-        host = self.request.host
-        post_query = BlogPost.query(BlogPost.author == req_user,
-                                    BlogPost.blogName == blog).order(-BlogPost.creation)
-        posts = post_query.fetch()
-        
-        if req_user :
-            template_values = {
-                'author': req_user,
-                'host':host,
-                'postList':posts,
-            }
-            self.response.headers['Content-Type'] = "text/xml; charset=utf-8"
-            template = JINJA_ENVIRONMENT.get_template('templates/get_rss.rss')
             self.response.write(template.render(template_values))
         else:
             self.redirect(users.create_login_url('/'))
@@ -835,7 +808,6 @@ application = webapp2.WSGIApplication([
     ('/blog', BlogTopic),
     ('/post_edit', EditPost),
     ('/read_more', ReadMore),
-    ('/get_rss', GetRSS),
     ('/upload_avatar', UploadAvatar),
     ('/add_avatar', AddAvatar),
     ('/img', GetAvatar),
