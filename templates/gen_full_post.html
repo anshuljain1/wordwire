@@ -48,6 +48,7 @@
                     <hr>
                     <div><img class="creator"  src="img?img_id={{comment.author}}"><a href="/saveComment?author={{author}}&blogpostID={{post.uid}}"> {{comment.author}}</a> Wrote:</div>
                     <div class="comment-content">{{comment.comment}}</div>
+                    <div class="comment-date">{{comment.creation}}</div>
                 </div>
             {% endfor %}
         </div>
