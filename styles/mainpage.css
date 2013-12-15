@@ -3,6 +3,10 @@ a:visited {text-decoration:none;} /* visited link */
 a:hover {text-decoration:underline;}   /* mouse over link */
 a:active {text-decoration:underline;}  /* selected link */
 
+a.permalink {
+    color:rgba(154,154,154,1);
+}
+
 ul.nav_bar
 {
 list-style-type:none;

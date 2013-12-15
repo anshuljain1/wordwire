@@ -42,7 +42,7 @@
             {% endfor %}
                 </form>
             </div>
-            <div class="title">{{post.title}}</div>
+            <div class="title">{{post.title}}</div><a class="permalink" href="/read_more?author={{post.author}}&uid={{post.uid}}">Permalink</a>
             <div class="viewcount">Views: {{post.viewCount}}</div>
             <div ><img class="creator" src="img?img_id={{post.author}}"><a class="post_author" href="/user?author={{post.author}}">{{post.author}}</a> | {{post.creation}} | Last modified on {{post.date}}, at {{post.time}}.</div>
             <div>{{post.content|truncate(500)}}<a href="/read_more?author={{post.author}}&uid={{post.uid}}">Read More</a></div>

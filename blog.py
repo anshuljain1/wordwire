@@ -67,7 +67,7 @@ class Main(webapp2.RequestHandler):
         blogpost_query = BlogPost.query().order(-BlogPost.creation)
         curs = Cursor(urlsafe=self.request.get('cursor'))
         postList, next_curs, more = blogpost_query.fetch_page(10, start_cursor=curs)
-
+        
         for i in xrange(len(postList)):
             postList[i].content = jinja2.Markup(postList[i].content)
         
