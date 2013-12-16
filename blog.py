@@ -379,8 +379,8 @@ class EditPost(webapp2.RequestHandler):
         
         xlink = re.compile(r'<a href="(https?://(\S+).co\S+)">\S+</a>')
         ximg = re.compile(r'<img src="(\S+)" \S+>')
-        content = ximg.sub(r'<\1>',content)
-        content = xlink.sub(r'<\1>',content)
+        content = ximg.sub(r'\1',content)
+        content = xlink.sub(r'\1',content)
         
         uid = stalePost.uid
         parent = user_key(user.nickname()).get()
