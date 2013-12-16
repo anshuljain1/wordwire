@@ -5,6 +5,8 @@ from google.appengine.ext import ndb
 from google.appengine.ext import db
 from google.appengine.datastore.datastore_query import Cursor
 from google.appengine.api import images
+from google.appengine.ext import blobstore
+from google.appengine.ext.webapp import blobstore_handlers
 
 import webapp2
 import jinja2
@@ -79,12 +81,11 @@ class AvatarData(db.Model):
     avatar = db.BlobProperty()
     date = db.DateTimeProperty(auto_now_add=True)      
 
-class UsrImageData(db.Model):
-    author = db.StringProperty(indexed =True)
-    name = db.StringProperty()
-    image = db.BlobProperty()
-    imgId = db.StringProperty()
-    date = db.DateTimeProperty(auto_now_add=True)
+class UsrImageData(ndb.Model):
+    author = ndb.StringProperty(indexed =True)
+    name = ndb.StringProperty()
+    imgId = ndb.StringProperty()
+    date = ndb.DateTimeProperty(auto_now_add=True)
 
 
 
@@ -757,22 +758,23 @@ class UploadAvatar(webapp2.RequestHandler):
 
 ''' User Uploaded Images Classes and retrieval functionality '''   
 
-class GetImage(webapp2.RequestHandler):
+class GetImage(blobstore_handlers.BlobstoreDownloadHandler):
     def get(self):
-        img_id = str(self.request.get('img_id'))
+        resource = str(self.request.get('img_id'))
         
-        imageData = UsrImageData.all()
-        imageData.filter('imgId =', img_id)
-        if imageData:
-            self.response.headers['Content-Type'] = 'image/png'
-            self.response.out.write(imageData[0].image)
+        blob_info = blobstore.BlobInfo.get(resource)
+        self.response.headers['Content-Type'] = 'image/png'
+        self.send_blob(blob_info)
 
 class ImagePage(webapp2.RequestHandler):
     def get(self):
         user = users.get_current_user()
         host = self.request.host
-        images = db.Query(UsrImageData)
-        images.filter('author =', user.nickname())
+        
+        image_query = UsrImageData.query(
+                ancestor=user_key(user.nickname()))
+        images = image_query.fetch()        
+        
         url = users.create_logout_url('/')
         url_linktext = 'Logout'
         
@@ -791,23 +793,27 @@ class ImagePage(webapp2.RequestHandler):
 class AddImage(webapp2.RequestHandler):
     def get(self):
         user = users.get_current_user()
+        upload_url = blobstore.create_upload_url('/upload_img')
         template_values = {
                 'usr':user.nickname(),
+                'upload_url':upload_url,
         }    
         template = JINJA_ENVIRONMENT.get_template('templates/add_img.html')
         self.response.write(template.render(template_values))
 
-class UploadImage(webapp2.RequestHandler):
+class UploadImage(blobstore_handlers.BlobstoreUploadHandler):
     def post(self):
         user = users.get_current_user()
-
-        imagedata = UsrImageData(parent = usrimg_key(user.nickname()))
+        
+        upload_files = self.get_uploads('file')  # 'file' is file upload field in the form
+        logging.error(upload_files)
+        blob_info = upload_files[0]
+        
+        imagedata = UsrImageData(parent = user_key(user.nickname()))
         imagedata.author = user.nickname()
         imagedata.name = self.request.get('name', DEFAULT_IMAGE_NAME)
-        imagedata.image = db.Blob(self.request.get('image'))
-        imagedata.imgId = str(uuid.uuid1())
-        if imagedata.image:
-            imagedata.put()
+        imagedata.imgId = str(blob_info.key())
+        imagedata.put()
         query_params = {'author': user.nickname()}
         
         self.redirect('/user?'+ urllib.urlencode(query_params))

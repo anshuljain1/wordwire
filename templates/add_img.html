@@ -8,11 +8,10 @@
         <h2 class="heading">Hey {{usr}}</h2>
         <hr>
         <h3 class="update-here">Upload your new image here!</h3>
-        <h4 class="update-here">Max image Size: 1MB</h4>
          <div class="content">
-    <form name = "input" action = "/upload_img?usr={{usr}}" method = "post" enctype="multipart/form-data">
+    <form name = "input" action = "{{upload_url}}" method = "post" enctype="multipart/form-data">
         name: <input type = "text" name = "name">
-        image: <input type = "file" name = "image">
+        image: <input type = "file" name = "file">
         <div><input type="submit" value="Upload!"></div>
     </form>
              </div>
