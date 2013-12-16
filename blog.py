@@ -298,7 +298,7 @@ class PostPublish(webapp2.RequestHandler):
         if content:
             new_post.content = content
             link= re.compile(r'<\s*(https?://w*\.?(\S+)\.co\S+)\s*>')
-            img = re.compile(r'<\s*(https?://.+/(\S+)\.(jpg|jpeg|gif|png))\s*>')
+            img = re.compile(r'<\s*(https?://\S+/(\S+)\.(jpg|jpeg|gif|png))\s*>')
             locimg = re.compile(r'<\s*(https?://\S+/usr_img\?img_id(\S+))\s*>')
         
             new_post.content = img.sub(r'<img src="\1" alt="\2">',new_post.content)
