@@ -739,7 +739,7 @@ class UploadAvatar(webapp2.RequestHandler):
         
 
         imagedata = AvatarData(parent = avatar_key(user.nickname()))
-        imagedata.author = self.request.get('name')
+        imagedata.author = self.request.get('name', DEFAULT_IMAGE_NAME)
         avatar = self.request.get('image')
         avatar = images.resize(avatar, 32, 32)
         imagedata.avatar = db.Blob(avatar)
