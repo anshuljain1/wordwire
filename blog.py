@@ -864,8 +864,8 @@ class FollowUser(webapp2.RequestHandler):
             cur_usr.followedUsers.append(follow_usr_name)
             cur_usr.followedUsers = list(set(cur_usr.followedUsers))
             cur_usr.put()
-            redirectUrl = '/user?author='+user.nickname()
-            self.redirect(redirectUrl)
+            query_params = {'author': user.nickname()}
+            self.redirect('/user?'+ urllib.urlencode(query_params))
         else:
            self.redirect(users.create_login_url('/'))
 
@@ -879,8 +879,8 @@ class UnFollowUser(webapp2.RequestHandler):
             cur_usr = userDB[0]
             cur_usr.followedUsers.remove(follow_usr_name)
             cur_usr.put()
-            redirectUrl = '/user?author='+user.nickname()
-            self.redirect(redirectUrl)
+            query_params = {'author': user.nickname()}
+            self.redirect('/user?'+ urllib.urlencode(query_params))
         else:
            self.redirect(users.create_login_url('/'))
            
