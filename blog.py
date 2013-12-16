@@ -15,6 +15,7 @@ import re
 import time
 
 DEFAULT_TITLE_NAME = 'My Blog Post'
+DEFAULT_IMAGE_NAME = 'My Image'
 
 JINJA_ENVIRONMENT = jinja2.Environment(
     loader=jinja2.FileSystemLoader(os.path.dirname(__file__)),
@@ -802,10 +803,11 @@ class UploadImage(webapp2.RequestHandler):
 
         imagedata = UsrImageData(parent = usrimg_key(user.nickname()))
         imagedata.author = user.nickname()
-        imagedata.name = self.request.get('name')
+        imagedata.name = self.request.get('name', DEFAULT_IMAGE_NAME)
         imagedata.image = db.Blob(self.request.get('image'))
         imagedata.imgId = str(uuid.uuid1())
-        imagedata.put()
+        if imagedata.image:
+            imagedata.put()
         query_params = {'author': user.nickname()}
         
         self.redirect('/user?'+ urllib.urlencode(query_params))
