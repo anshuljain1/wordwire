@@ -297,9 +297,14 @@ class PostPublish(webapp2.RequestHandler):
         
         if content:
             new_post.content = content
-            link= re.compile(r'<\s*(https?://w*\.?(\S+)\.co\S+)\s*>')
-            img = re.compile(r'<\s*(https?://\S+/(\S+)\.(jpg|jpeg|gif|png))\s*>')
-            locimg = re.compile(r'<\s*(https?://\S+/usr_img\?img_id(\S+))\s*>')
+            #link= re.compile(r'<\s*(https?://w*\.?(\S+)\.co\S+)\s*>')
+            #img = re.compile(r'<\s*(https?://\S+/(\S+)\.(jpg|jpeg|gif|png))\s*>')
+            #locimg = re.compile(r'<\s*(https?://\S+/usr_img\?img_id(\S+))\s*>')
+            
+            link= re.compile(r'(?<!img src\=\")(https?://w*\.?(\S+)\.co\S+)')
+            img = re.compile(r'(https?://\S+/(\S+)\.(jpg|jpeg|gif|png))')
+            locimg = re.compile(r'(?<!")(https?://\S+/usr_img\?img_id(\S+))')
+            
         
             new_post.content = img.sub(r'<img src="\1" alt="\2">',new_post.content)
             new_post.content = locimg.sub(r'<img src="\1" alt="\2">',new_post.content)      
@@ -419,9 +424,9 @@ class EditPost(webapp2.RequestHandler):
         
         new_post.content = content
         
-        link= re.compile(r'<\s*(https?://w*\.(\S+)\.co\S+)\s*>')
-        img = re.compile(r'<\s*(https?://.+/(\S+)\.(jpg|jpeg|gif|png))\s*>')
-        locimg = re.compile(r'<\s*(https?://\S+/usr_img\?img_id(\S+))\s*>')
+        link= re.compile(r'(?<!img src\=\")(https?://w*\.?(\S+)\.co\S+)')
+        img = re.compile(r'(https?://\S+/(\S+)\.(jpg|jpeg|gif|png))')
+        locimg = re.compile(r'(?<!")(https?://\S+/usr_img\?img_id(\S+))')
         
         new_post.content = img.sub(r'<img src="\1" alt="\2">',new_post.content)
         new_post.content = locimg.sub(r'<img src="\1" alt="\2">',new_post.content)     
