@@ -22,6 +22,7 @@ JINJA_ENVIRONMENT = jinja2.Environment(
     autoescape=True)
 
 
+''' Keys methods. They return key for different classes '''
 
 def user_key(creator_ID):
     """ Constructs a datastore entry for a blog"""
@@ -31,6 +32,17 @@ def wordwire_key(author_ID):
     """ Constructs a datastore entry for WordWire Blog"""
     return ndb.Key('WordWire',author_ID)
 
+
+def avatar_key(avatar_name=None):
+    """Constructs a Datastore key for a Guestbook entity with guestbook_name."""
+    return db.Key.from_path('AvatarImageDB', avatar_name)
+
+def usrimg_key(user_name=None):
+    """Constructs a Datastore key for a UserImageDB entity with userimg key."""
+    return db.Key.from_path('UserImageDB', user_name)
+
+
+''' Datastore classes. These models store data in datastore. '''
 
 class BlogPost(ndb.Model):
     """Models an individual Guestbook entry with author, content, and date."""
@@ -59,9 +71,24 @@ class Comments(ndb.Model):
     blogpostID = ndb.StringProperty(indexed=True)
     comment = ndb.StringProperty()
     creation = ndb.DateTimeProperty(auto_now_add=True)
-        
+     
+class AvatarData(db.Model):
+    ''' User avatar Classes and retrieval functionality '''    
+    author = db.StringProperty()
+    avatar = db.BlobProperty()
+    date = db.DateTimeProperty(auto_now_add=True)      
+
+class UsrImageData(db.Model):
+    author = db.StringProperty(indexed =True)
+    name = db.StringProperty()
+    image = db.BlobProperty()
+    imgId = db.StringProperty()
+    date = db.DateTimeProperty(auto_now_add=True)
+
+
 
 class Main(webapp2.RequestHandler):
+    ''' This is the main method. It is redirected for the landing page. '''
     def get(self):
         user = users.get_current_user()
         blogpost_query = BlogPost.query().order(-BlogPost.creation)
@@ -112,6 +139,7 @@ class Main(webapp2.RequestHandler):
             self.response.out.write('</body></html>')
 
 class FollowedPosts(webapp2.RequestHandler):
+    ''' Redireted to when logged in user clicks on followed posts tab for the users they are following. '''
     def get(self):
         user = users.get_current_user()
         if user:
@@ -141,6 +169,7 @@ class FollowedPosts(webapp2.RequestHandler):
                 self.response.write(template.render(template_values))
             
 class UserPage(webapp2.RequestHandler):
+    ''' Universal handler for the user page. This class is called whenever user clicks on MyWire. '''
     def get(self):
         req_user = str(urllib.url2pathname(self.request.get('author')))
         user = users.get_current_user()
@@ -225,7 +254,7 @@ class UserPage(webapp2.RequestHandler):
             
 
 class NewPost(webapp2.RequestHandler):
-
+    ''' Handler for new post tab. This class is called to render new post CGI form. '''
     def get(self):
         user = users.get_current_user()
         if user :
@@ -243,7 +272,61 @@ class NewPost(webapp2.RequestHandler):
         else:
             self.redirect(users.create_login_url('/'))
 
+class PostPublish(webapp2.RequestHandler):
+    ''' Handler for new post tab. This class is called when submit button on new post CGI form is pressed. '''
+    def post(self):
+        uid = str(uuid.uuid1())
+        user = users.get_current_user()
+        new_post = BlogPost(id =uid, parent = user_key(user.nickname()))
+        new_post.author = str(urllib.url2pathname(self.request.get('author')))
+        new_post.blogName = self.request.get('topic')
+        title = self.request.get('title', DEFAULT_TITLE_NAME)
+        content = self.request.get('content')
+        
+        content = content.rstrip(' ')
+        content = content.lstrip(' ')        
+        
+        title = title.rstrip(' ')
+        title = title.lstrip(' ')
+        if title:
+            new_post.title = title
+        else:
+            new_post.title = DEFAULT_TITLE_NAME
+        
+        if content:
+            new_post.content = content
+            link= re.compile(r'<\s*(https?://w*\.?(\S+)\.co\S+)\s*>')
+            img = re.compile(r'<\s*(https?://.+/(\S+)\.(jpg|jpeg|gif|png))\s*>')
+            locimg = re.compile(r'<\s*(https?://\S+/usr_img\?img_id(\S+))\s*>')
+        
+            new_post.content = img.sub(r'<img src="\1" alt="\2">',new_post.content)
+            new_post.content = locimg.sub(r'<img src="\1" alt="\2">',new_post.content)      
+            new_post.content = link.sub(r'<a href="\1">\2</a>',new_post.content)  
+        
+            new_post.upvote = 0
+            new_post.viewCount = 0
+            new_post.uid = uid
+            tag = self.request.get('tags')
+            tag = tag.lower()
+            tag = tag.split(',')
+        
+            for i in xrange(len(tag)):
+                tag[i] = tag[i].lstrip(' ')
+                tag[i]=tag[i].rstrip(' ')
+            tag = filter(None, tag)
+            new_post.tag = tag
+            new_post.put()
+            owner=new_post.key.parent().get()
+            owner.tagList = owner.tagList+tag
+            owner.tagList = list(set(owner.tagList))
+            owner.put()
+        query_params = {'author': user.nickname()}
+        time.sleep(1)
+        self.redirect('/user?'+ urllib.urlencode(query_params))
+
+
 class CreateBlog(webapp2.RequestHandler):
+    ''' Handler to create new blog category. '''
     def get(self):
         user = users.get_current_user()
         
@@ -259,55 +342,20 @@ class CreateBlog(webapp2.RequestHandler):
     def post(self):
         authorName = str(urllib.url2pathname(self.request.get('author')))
         blogTitle = str(self.request.get('blog_name'))
-        blogUser = user_key(authorName).get()
-        blogUser.blogList.append(blogTitle)
-        blogUser.blogList = list(set(blogUser.blogList))
-        blogUser.put()
+        blogTitle = blogTitle.rstrip(' ')
+        blogTitle = blogTitle.lstrip(' ')
+        if blogTitle:
+            blogUser = user_key(authorName).get()
+            blogUser.blogList.append(blogTitle)
+            blogUser.blogList = list(set(blogUser.blogList))
+            blogUser.put()
         query_params = {'author': authorName}
         time.sleep(1)
         self.redirect('/user?'+ urllib.urlencode(query_params))
 
-class PostPublish(webapp2.RequestHandler):
-    def post(self):
-        uid = str(uuid.uuid1())
-        user = users.get_current_user()
-        new_post = BlogPost(id =uid, parent = user_key(user.nickname()))
-        new_post.author = str(urllib.url2pathname(self.request.get('author')))
-        new_post.blogName = self.request.get('topic')
-        new_post.title = self.request.get('title', DEFAULT_TITLE_NAME)
-        new_post.content = self.request.get('content')
-        
-        link= re.compile(r'<\s*(https?://w*\.?(\S+)\.co\S+)\s*>')
-        img = re.compile(r'<\s*(https?://.+/(\S+)\.(jpg|jpeg|gif|png))\s*>')
-        locimg = re.compile(r'<\s*(https?://\S+/usr_img\?img_id(\S+))\s*>')
-        
-        new_post.content = img.sub(r'<img src="\1" alt="\2">',new_post.content)
-        new_post.content = locimg.sub(r'<img src="\1" alt="\2">',new_post.content)      
-        new_post.content = link.sub(r'<a href="\1">\2</a>',new_post.content)  
-        
-        new_post.upvote = 0
-        new_post.viewCount = 0
-        new_post.uid = uid
-        tag = self.request.get('tags')
-        tag = tag.lower()
-        tag = tag.split(',')
-        
-        for i in xrange(len(tag)):
-            tag[i] = tag[i].lstrip(' ')
-            tag[i]=tag[i].rstrip(' ')
-        tag = filter(None, tag)
-        new_post.tag = tag
-        new_post.put()
-        owner=new_post.key.parent().get()
-        owner.tagList = owner.tagList+tag
-        owner.tagList = list(set(owner.tagList))
-        owner.put()
-        query_params = {'author': user.nickname()}
-        time.sleep(1)
-        self.redirect('/user?'+ urllib.urlencode(query_params))
 
 class EditPost(webapp2.RequestHandler):
-    
+    ''' Handler for when user clicks on edit a post. Get is to render the CGI edit form and POST is to store it. '''
     def get(self):
         user = users.get_current_user()
         uid = str(self.request.get('uid'))
@@ -350,12 +398,25 @@ class EditPost(webapp2.RequestHandler):
                             parent = user_key(user.nickname()))
         new_post.author = str(urllib.url2pathname(self.request.get('author')))
         new_post.blogName = self.request.get('topic')
-        new_post.title = self.request.get('title', DEFAULT_TITLE_NAME)
-        new_post.content = self.request.get('content')
+        title = self.request.get('title', DEFAULT_TITLE_NAME)
+        content = self.request.get('content')
         new_post.uid = str(self.request.get('uid'))
         new_post.upvote = 0
         new_post.viewCount = 0
 
+        
+        content = content.rstrip(' ')
+        content = content.lstrip(' ')        
+        
+        title = title.rstrip(' ')
+        title = title.lstrip(' ')
+        if title:
+            new_post.title = title
+        else:
+            new_post.title = DEFAULT_TITLE_NAME
+        
+        new_post.content = content
+        
         link= re.compile(r'<\s*(https?://w*\.(\S+)\.co\S+)\s*>')
         img = re.compile(r'<\s*(https?://.+/(\S+)\.(jpg|jpeg|gif|png))\s*>')
         locimg = re.compile(r'<\s*(https?://\S+/usr_img\?img_id(\S+))\s*>')
@@ -384,6 +445,7 @@ class EditPost(webapp2.RequestHandler):
         self.redirect('/user?'+ urllib.urlencode(query_params))
 
 class TaggedPost(webapp2.RequestHandler):
+    ''' Handler when user clicks on a tag '''
     def post(self):
         tag = str(self.request.get('tag'))
         author = str(urllib.url2pathname(self.request.get('author')))
@@ -448,6 +510,7 @@ class TaggedPost(webapp2.RequestHandler):
         self.redirect('/')
 
 class BlogTopic(webapp2.RequestHandler):
+    ''' Handler when user clicks on a blog Name '''
     def post(self):
         blog = str(self.request.get('blog'))
         author = str(urllib.url2pathname(self.request.get('author')))
@@ -501,6 +564,7 @@ class BlogTopic(webapp2.RequestHandler):
         self.redirect('/')
 
 class ReadMore(webapp2.RequestHandler):
+    ''' Handler when user clicks on read more. '''
     def get(self):
         req_user = str(urllib.url2pathname(self.request.get('author')))
         uid = str(self.request.get('uid'))
@@ -567,16 +631,20 @@ class ReadMore(webapp2.RequestHandler):
             self.response.write(template.render(template_values))
 
 class SaveComment(webapp2.RequestHandler):
+    ''' Handler when user clicks on comment. Get is for CGIT form and post is for adding to datastore. '''
     def post(self):
         user = users.get_current_user()
         if user:
             comment = self.request.get('comment')
             author  = user.nickname()
             blogpostID = self.request.get('blogpostID')
-            new_comment = Comments(author = author,
+            comment = comment.rstrip(' ')
+            comment = comment.lstrip(' ')
+            if comment:
+                new_comment = Comments(author = author,
                                    comment = comment,
                                    blogpostID = blogpostID)
-            new_comment.put()
+                new_comment.put()
             reDirectURL = '/read_more?author='+author+'&'+'uid='+blogpostID
             time.sleep(1)
             self.redirect(reDirectURL)
@@ -605,6 +673,7 @@ class SaveComment(webapp2.RequestHandler):
 
 
 class GetRSS(webapp2.RequestHandler):
+    ''' Handler when user clicks on Get RSS option when a blog is selected. '''
     def get(self):
         req_user = str(urllib.url2pathname(self.request.get('author')))
         blog = self.request.get('blog')
@@ -630,13 +699,9 @@ class GetRSS(webapp2.RequestHandler):
             self.redirect(users.create_login_url('/'))
 
 
-''' User avatar Classes and retrieval functionality '''         
-class AvatarData(db.Model):
-    author = db.StringProperty()
-    avatar = db.BlobProperty()
-    date = db.DateTimeProperty(auto_now_add=True)
 
 class GetAvatar(webapp2.RequestHandler):
+    ''' Handler that return user avatar image. '''
     def get(self):
         usr = self.request.get('img_id')
         img_query = db.GqlQuery('SELECT * '
@@ -649,11 +714,9 @@ class GetAvatar(webapp2.RequestHandler):
             self.response.headers['Content-Type'] = 'image/png'
             self.response.out.write(image.avatar)
 
-def avatar_key(avatar_name=None):
-    """Constructs a Datastore key for a Guestbook entity with guestbook_name."""
-    return db.Key.from_path('AvatarImageDB', avatar_name)
 
 class AddAvatar(webapp2.RequestHandler):
+    ''' Handler to generate form to select new avatar. '''
     def get(self):
         user = users.get_current_user()
         template_values = {
@@ -663,6 +726,7 @@ class AddAvatar(webapp2.RequestHandler):
         self.response.write(template.render(template_values))
 
 class UploadAvatar(webapp2.RequestHandler):
+    ''' Handler to upload new avatar to datastore. '''
     def post(self):
         user = users.get_current_user()
         img_query = db.GqlQuery('SELECT * '
@@ -691,12 +755,6 @@ class UploadAvatar(webapp2.RequestHandler):
 
 
 ''' User Uploaded Images Classes and retrieval functionality '''   
-class UsrImageData(db.Model):
-    author = db.StringProperty(indexed =True)
-    name = db.StringProperty()
-    image = db.BlobProperty()
-    imgId = db.StringProperty()
-    date = db.DateTimeProperty(auto_now_add=True)
 
 class GetImage(webapp2.RequestHandler):
     def get(self):
@@ -728,9 +786,6 @@ class ImagePage(webapp2.RequestHandler):
         template = JINJA_ENVIRONMENT.get_template('templates/img_page.html')
         self.response.write(template.render(template_values))
 
-def usrimg_key(user_name=None):
-    """Constructs a Datastore key for a UserImageDB entity with userimg key."""
-    return db.Key.from_path('UserImageDB', user_name)
 
 class AddImage(webapp2.RequestHandler):
     def get(self):
@@ -758,6 +813,7 @@ class UploadImage(webapp2.RequestHandler):
 ''' User Uploaded Images Classes and retrieval functionality ends here ''' 
 
 class Search(webapp2.RequestHandler):
+    ''' Universal search handler. '''
     def post(self):
         user = users.get_current_user()
         search_str = self.request.get('query')
@@ -793,7 +849,9 @@ class Search(webapp2.RequestHandler):
         template = JINJA_ENVIRONMENT.get_template('templates/homepage.html')
         self.response.write(template.render(template_values))
 
+''' handlers to follow and unfollow users '''
 class FollowUser(webapp2.RequestHandler):
+
     def get(self):
         user = users.get_current_user()
         if user:
@@ -823,7 +881,8 @@ class UnFollowUser(webapp2.RequestHandler):
             self.redirect(redirectUrl)
         else:
            self.redirect(users.create_login_url('/'))
-
+           
+''' handlers to follow and unfollow users end here '''
 
 application = webapp2.WSGIApplication([
     ('/', Main),
